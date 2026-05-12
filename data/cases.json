@@ -1,0 +1,220 @@
+[
+  {
+    "id": "case-001-usa-ne-unmc-confirmed",
+    "schema_version": 0,
+    "country": "US",
+    "admin1": "NE",
+    "case_type": "confirmed",
+    "current_status": "confirmed",
+    "case_count": 1,
+    "date_reported": "2026-05-10",
+    "source_articles": [
+      {
+        "url": "https://www.npr.org/2026/05/10/nx-s1-5817578/hantavirus-cruise-ship-nebraska-us-passengers",
+        "source_name": "NPR",
+        "title": "U.S. cruise passengers arrive in the U.S. after one tests positive for hantavirus"
+      },
+      {
+        "url": "https://www.cdc.gov/han/php/notices/han00528.html",
+        "source_name": "CDC HAN",
+        "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
+      }
+    ],
+    "notes": "American MV Hondius passenger at UNMC National Quarantine Unit biocontainment; tested mildly positive for Andes virus."
+  },
+  {
+    "id": "case-002-usa-ne-unmc-quarantine",
+    "schema_version": 0,
+    "country": "US",
+    "admin1": "NE",
+    "case_type": "suspected",
+    "current_status": "suspected_unresolved",
+    "case_count": 15,
+    "date_reported": "2026-05-10",
+    "source_articles": [
+      {
+        "url": "https://www.npr.org/2026/05/10/nx-s1-5817578/hantavirus-cruise-ship-nebraska-us-passengers",
+        "source_name": "NPR",
+        "title": "U.S. cruise passengers arrive in the U.S. after one tests positive for hantavirus"
+      },
+      {
+        "url": "https://www.cnn.com/2026/05/11/us/live-news/hantavirus-cruise-outbreak",
+        "source_name": "CNN",
+        "title": "Live updates: Passengers from hantavirus-hit cruise ship being monitored at US medical units"
+      }
+    ],
+    "notes": "15 American MV Hondius passengers in the National Quarantine Unit at UNMC; asymptomatic at time of admission."
+  },
+  {
+    "id": "case-003-usa-ga-emory-symptomatic",
+    "schema_version": 0,
+    "country": "US",
+    "admin1": "GA",
+    "case_type": "suspected",
+    "current_status": "suspected_unresolved",
+    "case_count": 1,
+    "date_reported": "2026-05-11",
+    "source_articles": [
+      {
+        "url": "https://www.cnn.com/2026/05/11/us/live-news/hantavirus-cruise-outbreak",
+        "source_name": "CNN",
+        "title": "Live updates: Passengers from hantavirus-hit cruise ship being monitored at US medical units"
+      }
+    ],
+    "notes": "MV Hondius passenger transferred to Emory University, Atlanta; symptomatic, awaiting confirmatory testing."
+  },
+  {
+    "id": "case-004-usa-ga-emory-monitored",
+    "schema_version": 0,
+    "country": "US",
+    "admin1": "GA",
+    "case_type": "suspected",
+    "current_status": "suspected_unresolved",
+    "case_count": 1,
+    "date_reported": "2026-05-11",
+    "source_articles": [
+      {
+        "url": "https://www.cnn.com/2026/05/11/us/live-news/hantavirus-cruise-outbreak",
+        "source_name": "CNN",
+        "title": "Live updates: Passengers from hantavirus-hit cruise ship being monitored at US medical units"
+      }
+    ],
+    "notes": "Second MV Hondius passenger at Emory University; under monitoring."
+  },
+  {
+    "id": "case-005-usa-nj-air-exposure",
+    "schema_version": 0,
+    "country": "US",
+    "admin1": "NJ",
+    "case_type": "suspected",
+    "current_status": "suspected_unresolved",
+    "case_count": 2,
+    "date_reported": "2026-05-11",
+    "source_articles": [
+      {
+        "url": "https://www.today.com/health/disease/us-hantavirus-cruise-ship-outbreak-passengers-map-states-rcna344213",
+        "source_name": "TODAY",
+        "title": "Is the Hantavirus in the US? Map Shows States Where Passengers Have Returned Home"
+      }
+    ],
+    "notes": "Two New Jersey residents being monitored after air-travel exposure to an MV Hondius passenger; no symptoms reported."
+  },
+  {
+    "id": "case-006-che-married-couple-deaths",
+    "schema_version": 0,
+    "country": "CH",
+    "admin1": null,
+    "case_type": "death",
+    "current_status": "deceased",
+    "case_count": 2,
+    "date_reported": "2026-05-08",
+    "source_articles": [
+      {
+        "url": "https://www.cdc.gov/han/php/notices/han00528.html",
+        "source_name": "CDC HAN",
+        "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
+      },
+      {
+        "url": "https://www.cnn.com/us/maps-hantavirus-cruise-outbreak-vis",
+        "source_name": "CNN",
+        "title": "Visualizing the hantavirus cruise outbreak in maps and charts"
+      }
+    ],
+    "notes": "Married Swiss couple, both MV Hondius passengers; died of confirmed Andes virus."
+  },
+  {
+    "id": "case-007-deu-national-death",
+    "schema_version": 0,
+    "country": "DE",
+    "admin1": null,
+    "case_type": "death",
+    "current_status": "deceased",
+    "case_count": 1,
+    "date_reported": "2026-05-08",
+    "source_articles": [
+      {
+        "url": "https://www.cdc.gov/han/php/notices/han00528.html",
+        "source_name": "CDC HAN",
+        "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
+      },
+      {
+        "url": "https://www.cnn.com/us/maps-hantavirus-cruise-outbreak-vis",
+        "source_name": "CNN",
+        "title": "Visualizing the hantavirus cruise outbreak in maps and charts"
+      }
+    ],
+    "notes": "German national, former MV Hondius passenger; died of confirmed Andes virus."
+  },
+  {
+    "id": "case-008-nld-confirmed",
+    "schema_version": 0,
+    "country": "NL",
+    "admin1": null,
+    "case_type": "confirmed",
+    "current_status": "confirmed",
+    "case_count": 1,
+    "date_reported": "2026-05-06",
+    "source_articles": [
+      {
+        "url": "https://www.cdc.gov/han/php/notices/han00528.html",
+        "source_name": "CDC HAN",
+        "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
+      }
+    ],
+    "notes": "Dutch MV Hondius passenger; confirmed Andes virus (the cruise ship was Dutch-flagged)."
+  },
+  {
+    "id": "case-009-gbr-dual-national",
+    "schema_version": 0,
+    "country": "GB",
+    "admin1": null,
+    "case_type": "suspected",
+    "current_status": "suspected_unresolved",
+    "case_count": 1,
+    "date_reported": "2026-05-10",
+    "source_articles": [
+      {
+        "url": "https://www.cnn.com/2026/05/11/us/live-news/hantavirus-cruise-outbreak",
+        "source_name": "CNN",
+        "title": "Live updates: Passengers from hantavirus-hit cruise ship being monitored at US medical units"
+      }
+    ],
+    "notes": "British dual-national MV Hondius passenger, currently being monitored at a US facility."
+  },
+  {
+    "id": "case-010-zaf-passenger",
+    "schema_version": 0,
+    "country": "ZA",
+    "admin1": null,
+    "case_type": "suspected",
+    "current_status": "suspected_unresolved",
+    "case_count": 1,
+    "date_reported": "2026-05-09",
+    "source_articles": [
+      {
+        "url": "https://www.cdc.gov/han/php/notices/han00528.html",
+        "source_name": "CDC HAN",
+        "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
+      }
+    ],
+    "notes": "South African MV Hondius passenger; reported as part of the multi-country cluster."
+  },
+  {
+    "id": "case-011-arg-cruise-departure",
+    "schema_version": 0,
+    "country": "AR",
+    "admin1": null,
+    "case_type": "confirmed",
+    "current_status": "confirmed",
+    "case_count": 1,
+    "date_reported": "2026-05-02",
+    "source_articles": [
+      {
+        "url": "https://www.cdc.gov/han/php/notices/han00528.html",
+        "source_name": "CDC HAN",
+        "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
+      }
+    ],
+    "notes": "Argentine case linked to the MV Hondius cluster; the cruise departed from southern Argentina on April 1, 2026."
+  }
+]
