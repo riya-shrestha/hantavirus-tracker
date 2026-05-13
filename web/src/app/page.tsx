@@ -76,10 +76,12 @@ export default function Home() {
       <section aria-label="Globe">
         <CaseGlobeLazy cases={cases} />
         <p className="mt-2 text-xs text-muted-foreground">
-          Bar height proportional to case count. Color by worst-severity per
-          country (slate = deaths, red = confirmed, purple = probable, amber =
-          suspected, blue = monitoring). Orange arc shows MV Hondius cruise
-          route (Ushuaia → Tenerife, Apr 1 – May 10).
+          Affected countries outlined and tinted red. US bars are split by
+          state (NE / GA / NJ). Bar height proportional to case count; color
+          by worst-severity per region (slate = deaths, red = confirmed,
+          purple = probable, amber = suspected, blue = monitoring). Orange
+          arc shows MV Hondius cruise route (Ushuaia → Tenerife, Apr 1 – May
+          10). Drag to rotate; auto-rotates when idle.
         </p>
       </section>
 
