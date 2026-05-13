@@ -2,9 +2,9 @@
 
 import dynamic from "next/dynamic";
 
-// mapbox-gl uses WebGL and window APIs, so SSR is off.
-export const CaseMapboxMapLazy = dynamic(
-  () => import("./case-mapbox-map").then((mod) => mod.CaseMapboxMap),
+// maplibre-gl uses WebGL and window APIs, so SSR is off.
+export const CaseMapLazy = dynamic(
+  () => import("./case-map").then((mod) => mod.CaseMap),
   {
     ssr: false,
     loading: () => (

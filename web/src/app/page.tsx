@@ -1,6 +1,6 @@
 import casesData from "@/data/cases.json";
 import { type Case, computeHeadline } from "@/lib/types";
-import { CaseMapboxMapLazy } from "@/components/case-mapbox-map-lazy";
+import { CaseMapLazy } from "@/components/case-map-lazy";
 import { MetricCard } from "@/components/metric-card";
 import { CaseCard } from "@/components/case-card";
 import Link from "next/link";
@@ -74,15 +74,16 @@ export default function Home() {
       </p>
 
       <section aria-label="World map">
-        <CaseMapboxMapLazy cases={cases} />
+        <CaseMapLazy cases={cases} />
         <p className="mt-2 text-xs text-muted-foreground">
-          Pan/zoom via Mapbox vector tiles. Toggle between 3D globe (drag to
-          rotate freely) and 2D Mercator (infinite horizontal scroll). US
-          cases split by state (NE / GA / NJ) — each region marked by a
-          proportional circle sized by case count, colored by worst-severity
-          (slate = deaths, red = confirmed, purple = probable, blue =
-          monitoring). Orange dashed line traces the MV Hondius cruise route
-          (Ushuaia → Tenerife, Apr 1 – May 10, 2026).
+          MapLibre GL + OpenFreeMap vector tiles (no API key). Toggle
+          between 3D globe (drag to rotate freely) and 2D Mercator
+          (infinite horizontal scroll). US cases split by state (NE / GA /
+          NJ) — each region marked by a proportional circle sized by case
+          count, colored by worst-severity (slate = deaths, red = confirmed,
+          purple = probable, blue = monitoring). Orange dashed line traces
+          the MV Hondius cruise route (Ushuaia → Tenerife, Apr 1 – May 10,
+          2026).
         </p>
       </section>
 

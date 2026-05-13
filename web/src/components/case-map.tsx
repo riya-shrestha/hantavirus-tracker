@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import "mapbox-gl/dist/mapbox-gl.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 import Map, {
   Marker,
   Source,
   Layer,
   NavigationControl,
   type LayerProps,
-} from "react-map-gl/mapbox";
+} from "react-map-gl/maplibre";
 import { useTheme } from "next-themes";
 import type { Case } from "@/lib/types";
 import { countryCoords } from "@/data/country-coords";
@@ -16,7 +16,10 @@ import { usStateCoords } from "@/data/us-state-coords";
 import { cruiseRoute } from "@/data/cruise-route";
 import { Button } from "@/components/ui/button";
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+// OpenFreeMap — free vector tile hosting, no API key.
+// https://openfreemap.org
+const STYLE_LIGHT = "https://tiles.openfreemap.org/styles/positron";
+const STYLE_DARK = "https://tiles.openfreemap.org/styles/dark-matter";
 
 const SEVERITY_COLOR: Record<string, string> = {
   death: "#0f172a",
@@ -45,17 +48,17 @@ interface Point {
   color: string;
 }
 
-interface CaseMapboxMapProps {
+interface CaseMapProps {
   cases: Case[];
   onCountryClick?: (code: string) => void;
 }
 
-export function CaseMapboxMap({ cases, onCountryClick }: CaseMapboxMapProps) {
+export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const [projection, setProjection] = useState<"globe" | "mercator">("globe");
 
-  // Build points: split US cases by admin1 (state), others by country.
+  // Build per-region points (US split by state, others by country).
   const points = useMemo<Point[]>(() => {
     const usByState: Record<string, { count: number; types: Set<string> }> = {};
     const byCountry: Record<string, { count: number; types: Set<string> }> = {};
@@ -116,38 +119,7 @@ export function CaseMapboxMap({ cases, onCountryClick }: CaseMapboxMapProps) {
     [],
   );
 
-  // Token-missing state — graceful, instructive UI rather than a broken map
-  if (!MAPBOX_TOKEN) {
-    return (
-      <div className="w-full h-[480px] rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700/50 dark:bg-amber-950/20 p-6 flex flex-col items-center justify-center text-center space-y-3">
-        <p className="font-semibold text-amber-900 dark:text-amber-100">
-          Mapbox access token not configured
-        </p>
-        <p className="text-sm text-amber-800 dark:text-amber-200 max-w-md">
-          Get a free token at{" "}
-          <a
-            href="https://account.mapbox.com/access-tokens/"
-            target="_blank"
-            rel="noopener"
-            className="underline font-medium"
-          >
-            account.mapbox.com/access-tokens
-          </a>{" "}
-          and add it to <code className="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 rounded">web/.env.local</code> as:
-        </p>
-        <pre className="font-mono text-xs bg-amber-100 dark:bg-amber-900/40 px-3 py-2 rounded">
-          NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1...
-        </pre>
-        <p className="text-xs text-amber-700 dark:text-amber-300">
-          Then restart <code>npm run dev</code>.
-        </p>
-      </div>
-    );
-  }
-
-  const mapStyle = isDark
-    ? "mapbox://styles/mapbox/dark-v11"
-    : "mapbox://styles/mapbox/light-v11";
+  const mapStyle = isDark ? STYLE_DARK : STYLE_LIGHT;
 
   const cruiseLineLayer: LayerProps = {
     id: "cruise-route-line",
@@ -170,7 +142,6 @@ export function CaseMapboxMap({ cases, onCountryClick }: CaseMapboxMapProps) {
   return (
     <div className="relative w-full h-[520px] rounded-lg overflow-hidden border border-border">
       <Map
-        mapboxAccessToken={MAPBOX_TOKEN}
         initialViewState={{
           longitude: -8,
           latitude: 20,
@@ -178,11 +149,12 @@ export function CaseMapboxMap({ cases, onCountryClick }: CaseMapboxMapProps) {
         }}
         style={{ width: "100%", height: "100%" }}
         mapStyle={mapStyle}
-        projection={projection === "globe" ? { name: "globe" } : { name: "mercator" }}
+        projection={
+          projection === "globe" ? { type: "globe" } : { type: "mercator" }
+        }
         renderWorldCopies={projection === "mercator"}
         minZoom={0.5}
         maxZoom={8}
-        attributionControl={true}
       >
         <NavigationControl position="top-right" showCompass={false} />
 
