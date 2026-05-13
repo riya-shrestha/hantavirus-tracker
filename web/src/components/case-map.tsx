@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import Map, {
   Marker,
@@ -10,30 +10,31 @@ import Map, {
   type LayerProps,
 } from "react-map-gl/maplibre";
 import { useTheme } from "next-themes";
-import type { Case } from "@/lib/types";
+import { useRouter } from "next/navigation";
+import type { Case, CaseType } from "@/lib/types";
 import { countryCoords } from "@/data/country-coords";
 import { usStateCoords } from "@/data/us-state-coords";
 import { cruiseRoute } from "@/data/cruise-route";
-import { passengerDestinations } from "@/data/passenger-destinations";
+import {
+  passengerDestinations,
+  type PassengerDestination,
+} from "@/data/passenger-destinations";
 import { darkSlateStyle } from "@/data/dark-slate-style";
 import { Button } from "@/components/ui/button";
+import { CaseBadge } from "@/components/case-badge";
 
-// Light: OpenFreeMap's positron (clean, neutral, well-tuned).
-// Dark: our own custom style — uses OpenFreeMap's vector tiles but with
-// explicit slate colors so we know exactly what we're rendering.
 const STYLE_LIGHT = "https://tiles.openfreemap.org/styles/positron";
 
-// Distinct hues for the three marker types so they're easy to tell apart
 const SEVERITY_COLOR: Record<string, string> = {
-  death: "#0f172a", // slate-900
-  confirmed: "#dc2626", // red-600
-  probable: "#9333ea", // purple-600
-  suspected: "#f59e0b", // amber-500 (currently unused at marker level)
-  contact_monitoring: "#3b82f6", // blue-500 (legacy)
+  death: "#0f172a",
+  confirmed: "#dc2626",
+  probable: "#9333ea",
+  suspected: "#f59e0b",
+  contact_monitoring: "#3b82f6",
 };
-const MONITORING_COLOR = "#f97316"; // orange-500 — distinct from cruise route's amber
-const PASSENGER_COLOR = "#eab308"; // yellow-500
-const ROUTE_COLOR = "#f59e0b"; // amber-500
+const MONITORING_COLOR = "#f97316";
+const PASSENGER_COLOR = "#eab308";
+const ROUTE_COLOR = "#f59e0b";
 
 function pickSeverity(types: Set<string>): string {
   if (types.has("death")) return SEVERITY_COLOR.death;
@@ -51,6 +52,8 @@ interface Point {
   name: string;
   count: number;
   color: string;
+  cases: Case[]; // underlying case rows that fed this point
+  primaryType: CaseType;
 }
 
 interface CaseMapProps {
@@ -58,33 +61,119 @@ interface CaseMapProps {
   onCountryClick?: (code: string) => void;
 }
 
+/**
+ * Glass-style hover tooltip rendered above a map marker.
+ * `pointer-events-none` so it never intercepts mouse events.
+ */
+function HoverGlassCard({ children }: { children: ReactNode }) {
+  return (
+    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50 pointer-events-none w-72">
+      <div className="bg-background/70 backdrop-blur-md border border-border/60 rounded-lg shadow-2xl p-3 text-foreground text-sm space-y-2">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Wraps any marker visual with a hoverable region + glass-card tooltip.
+ */
+function HoverableMarker({
+  longitude,
+  latitude,
+  offset,
+  trigger,
+  tooltip,
+}: {
+  longitude: number;
+  latitude: number;
+  offset?: [number, number];
+  trigger: ReactNode;
+  tooltip: ReactNode;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const show = hovered || focused;
+  return (
+    <Marker
+      longitude={longitude}
+      latitude={latitude}
+      anchor="center"
+      offset={offset}
+    >
+      <div
+        className="relative"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+      >
+        {trigger}
+        {show && <HoverGlassCard>{tooltip}</HoverGlassCard>}
+      </div>
+    </Marker>
+  );
+}
+
+function caseTypeLabel(t: CaseType, count: number): string {
+  if (t === "death") return count === 1 ? "death" : "deaths";
+  if (t === "contact_monitoring")
+    return count === 1 ? "individual under monitoring" : "individuals under monitoring";
+  return count === 1 ? `${t} case` : `${t} cases`;
+}
+
 export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const [projection, setProjection] = useState<"globe" | "mercator">("globe");
+  const router = useRouter();
 
-  // CASE markers (confirmed / probable / suspected / death) — match the headline.
+  // CASE markers (confirmed / probable / suspected / death)
   const casePoints = useMemo<Point[]>(() => {
-    const usByState: Record<string, { count: number; types: Set<string> }> = {};
-    const byCountry: Record<string, { count: number; types: Set<string> }> = {};
+    const usByState: Record<
+      string,
+      { count: number; types: Set<CaseType>; cases: Case[] }
+    > = {};
+    const byCountry: Record<
+      string,
+      { count: number; types: Set<CaseType>; cases: Case[] }
+    > = {};
 
     for (const c of cases) {
       if (c.country === "XX") continue;
       if (c.case_type === "contact_monitoring") continue;
       if (c.country === "US" && c.admin1 && usStateCoords[c.admin1]) {
-        const e = (usByState[c.admin1] ??= { count: 0, types: new Set() });
+        const e = (usByState[c.admin1] ??= {
+          count: 0,
+          types: new Set(),
+          cases: [],
+        });
         e.count += c.case_count;
         e.types.add(c.case_type);
+        e.cases.push(c);
       } else if (countryCoords[c.country]) {
-        const e = (byCountry[c.country] ??= { count: 0, types: new Set() });
+        const e = (byCountry[c.country] ??= {
+          count: 0,
+          types: new Set(),
+          cases: [],
+        });
         e.count += c.case_count;
         e.types.add(c.case_type);
+        e.cases.push(c);
       }
     }
 
     const out: Point[] = [];
     for (const [stateCode, info] of Object.entries(usByState)) {
       const s = usStateCoords[stateCode];
+      const primary: CaseType =
+        info.types.has("death")
+          ? "death"
+          : info.types.has("confirmed")
+            ? "confirmed"
+            : info.types.has("probable")
+              ? "probable"
+              : "suspected";
       out.push({
         code: `case-${stateCode}`,
         countryCode: "US",
@@ -93,10 +182,20 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
         name: `${s.name}, USA`,
         count: info.count,
         color: pickSeverity(info.types),
+        cases: info.cases,
+        primaryType: primary,
       });
     }
     for (const [code, info] of Object.entries(byCountry)) {
       const ci = countryCoords[code];
+      const primary: CaseType =
+        info.types.has("death")
+          ? "death"
+          : info.types.has("confirmed")
+            ? "confirmed"
+            : info.types.has("probable")
+              ? "probable"
+              : "suspected";
       out.push({
         code: `case-${code}`,
         countryCode: code,
@@ -105,56 +204,66 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
         name: ci.name,
         count: info.count,
         color: pickSeverity(info.types),
+        cases: info.cases,
+        primaryType: primary,
       });
     }
     return out;
   }, [cases]);
 
-  // MONITORING markers (contact_monitoring only) — orange, distinct from cases.
+  // MONITORING markers
   const monitoringPoints = useMemo<Point[]>(() => {
-    const usByState: Record<string, number> = {};
-    const byCountry: Record<string, number> = {};
+    const usByState: Record<string, { count: number; cases: Case[] }> = {};
+    const byCountry: Record<string, { count: number; cases: Case[] }> = {};
 
     for (const c of cases) {
       if (c.country === "XX") continue;
       if (c.case_type !== "contact_monitoring") continue;
       if (c.country === "US" && c.admin1 && usStateCoords[c.admin1]) {
-        usByState[c.admin1] = (usByState[c.admin1] ?? 0) + c.case_count;
+        const e = (usByState[c.admin1] ??= { count: 0, cases: [] });
+        e.count += c.case_count;
+        e.cases.push(c);
       } else if (countryCoords[c.country]) {
-        byCountry[c.country] = (byCountry[c.country] ?? 0) + c.case_count;
+        const e = (byCountry[c.country] ??= { count: 0, cases: [] });
+        e.count += c.case_count;
+        e.cases.push(c);
       }
     }
 
     const out: Point[] = [];
-    for (const [stateCode, count] of Object.entries(usByState)) {
+    for (const [stateCode, info] of Object.entries(usByState)) {
       const s = usStateCoords[stateCode];
       out.push({
         code: `mon-${stateCode}`,
         countryCode: "US",
         lat: s.lat,
         lng: s.lng,
-        name: `${s.name}, USA — under monitoring`,
-        count,
+        name: `${s.name}, USA`,
+        count: info.count,
         color: MONITORING_COLOR,
+        cases: info.cases,
+        primaryType: "contact_monitoring",
       });
     }
-    for (const [code, count] of Object.entries(byCountry)) {
+    for (const [code, info] of Object.entries(byCountry)) {
       const ci = countryCoords[code];
       out.push({
         code: `mon-${code}`,
         countryCode: code,
         lat: ci.lat,
         lng: ci.lng,
-        name: `${ci.name} — under monitoring`,
-        count,
+        name: ci.name,
+        count: info.count,
         color: MONITORING_COLOR,
+        cases: info.cases,
+        primaryType: "contact_monitoring",
       });
     }
     return out;
   }, [cases]);
 
-  // Set of "code|admin1" strings where a case or monitoring marker already lives,
-  // so passenger destination yellow dots don't duplicate those locations.
+  // Set of regions already covered by case/monitoring markers, so passenger
+  // dots don't duplicate.
   const occupied = useMemo(() => {
     const set = new Set<string>();
     for (const c of cases) {
@@ -168,14 +277,13 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
     return set;
   }, [cases]);
 
-  const passengerPoints = useMemo(() => {
+  const passengerPoints = useMemo<PassengerDestination[]>(() => {
     return passengerDestinations.filter((d) => {
       const k = d.admin1 ? `${d.country}|${d.admin1}` : `${d.country}|`;
       return !occupied.has(k);
     });
   }, [occupied]);
 
-  // Cruise route LineString
   const cruiseRouteGeoJSON = useMemo<GeoJSON.Feature>(
     () => ({
       type: "Feature",
@@ -188,11 +296,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
     [],
   );
 
-  // mapStyle is a string URL for light (positron from OpenFreeMap) and an
-  // inline StyleSpecification object for dark (our slate style). MapLibre
-  // accepts either.
   const mapStyle = isDark ? darkSlateStyle : STYLE_LIGHT;
-  // Stable string key so the Map remounts cleanly when the theme toggles.
   const mapStyleKey = isDark ? "slate-dark" : "openfreemap-positron";
 
   const cruiseLineLayer: LayerProps = {
@@ -210,10 +314,76 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
   const markerSize = (count: number) =>
     Math.max(18, Math.min(56, Math.sqrt(count) * 9));
 
+  const handleCaseMarkerClick = (p: Point) => {
+    onCountryClick?.(p.countryCode);
+    // Also navigate to the first contributing case's detail page so the user
+    // can read full context.
+    if (p.cases.length > 0) {
+      router.push(`/cases/${p.cases[0].id}`);
+    }
+  };
+
+  // ---- Tooltip content builders ----
+
+  const renderCasesTooltip = (p: Point) => {
+    return (
+      <>
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+            {p.name}
+          </p>
+          <CaseBadge type={p.primaryType} />
+        </div>
+        <p className="text-base font-semibold">
+          {p.count} {caseTypeLabel(p.primaryType, p.count)}
+        </p>
+        <ul className="space-y-1.5 text-sm text-foreground/85">
+          {p.cases.slice(0, 3).map((c) => (
+            <li key={c.id} className="leading-snug">
+              <span className="text-muted-foreground">·</span>{" "}
+              <span className="line-clamp-2">{c.notes}</span>
+            </li>
+          ))}
+          {p.cases.length > 3 && (
+            <li className="text-xs text-muted-foreground italic">
+              + {p.cases.length - 3} more case row{p.cases.length - 3 === 1 ? "" : "s"}
+            </li>
+          )}
+        </ul>
+        <p className="text-xs text-muted-foreground pt-1 border-t border-border/40">
+          Click marker for full detail · {p.cases.reduce(
+            (s, c) => s + c.source_articles.length,
+            0,
+          )}{" "}
+          source article{p.cases.reduce((s, c) => s + c.source_articles.length, 0) === 1 ? "" : "s"}
+        </p>
+      </>
+    );
+  };
+
+  const renderPassengerTooltip = (d: PassengerDestination) => {
+    return (
+      <>
+        <div className="flex items-center gap-2">
+          <span
+            className="inline-block w-2.5 h-2.5 rounded-full"
+            style={{ background: PASSENGER_COLOR }}
+          />
+          <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+            Passenger destination
+          </p>
+        </div>
+        <p className="text-base font-semibold">{d.label}</p>
+        <p className="text-sm text-foreground/85 leading-snug">{d.note}</p>
+        <p className="text-xs text-muted-foreground pt-1 border-t border-border/40">
+          No confirmed cases yet
+        </p>
+      </>
+    );
+  };
+
   return (
     <div className="relative w-full h-[520px] rounded-lg overflow-hidden border border-border">
-      {/* `key={mapStyleKey}` forces a clean remount when the user toggles
-          light/dark, so MapLibre fully reloads the new style. */}
       <Map
         key={mapStyleKey}
         initialViewState={{ longitude: -8, latitude: 20, zoom: 1.8 }}
@@ -233,7 +403,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
           <Layer {...cruiseLineLayer} />
         </Source>
 
-        {/* Cruise waypoint dots */}
+        {/* Cruise waypoint dots (basic title tooltip, no glass card) */}
         {cruiseRoute.map((wp, i) => (
           <Marker
             key={`wp-${i}`}
@@ -255,59 +425,57 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
           </Marker>
         ))}
 
-        {/* Passenger-destination yellow dots (rendered first so cases/monitoring
-            sit on top when at the same point) */}
+        {/* Passenger-destination yellow dots */}
         {passengerPoints.map((d) => (
-          <Marker
+          <HoverableMarker
             key={`pax-${d.country}-${d.admin1 ?? ""}`}
             longitude={d.lng}
             latitude={d.lat}
-            anchor="center"
-          >
-            <div
-              className="rounded-full shadow-md"
-              style={{
-                width: 12,
-                height: 12,
-                background: PASSENGER_COLOR,
-                border: "1.5px solid white",
-              }}
-              title={`${d.label} — ${d.note}`}
-            />
-          </Marker>
+            trigger={
+              <div
+                className="rounded-full shadow-md cursor-help"
+                style={{
+                  width: 12,
+                  height: 12,
+                  background: PASSENGER_COLOR,
+                  border: "1.5px solid white",
+                }}
+              />
+            }
+            tooltip={renderPassengerTooltip(d)}
+          />
         ))}
 
-        {/* Monitoring markers (orange) — offset slightly south-east so they
-            don't fully cover a case marker at the same centroid */}
+        {/* Monitoring markers (orange) */}
         {monitoringPoints.map((p) => {
           const size = markerSize(p.count);
           return (
-            <Marker
-              key={`mon-${p.code}`}
+            <HoverableMarker
+              key={p.code}
               longitude={p.lng}
               latitude={p.lat}
-              anchor="center"
               offset={[size * 0.7, size * 0.4]}
-            >
-              <button
-                type="button"
-                onClick={() => onCountryClick?.(p.countryCode)}
-                title={`${p.name}: ${p.count} under monitoring`}
-                className="flex items-center justify-center font-bold text-white shadow-md cursor-pointer transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
-                style={{
-                  width: size,
-                  height: size,
-                  background: MONITORING_COLOR,
-                  borderRadius: "9999px",
-                  border: "2px solid white",
-                  fontSize: size > 28 ? 14 : 11,
-                  lineHeight: 1,
-                }}
-                aria-label={`${p.name}: ${p.count} under monitoring`}
-              >
-                {p.count}
-              </button>
-            </Marker>
+              trigger={
+                <button
+                  type="button"
+                  onClick={() => handleCaseMarkerClick(p)}
+                  className="flex items-center justify-center font-bold text-white shadow-md cursor-pointer transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                  style={{
+                    width: size,
+                    height: size,
+                    background: MONITORING_COLOR,
+                    borderRadius: "9999px",
+                    border: "2px solid white",
+                    fontSize: size > 28 ? 14 : 11,
+                    lineHeight: 1,
+                  }}
+                  aria-label={`${p.name}: ${p.count} under monitoring`}
+                >
+                  {p.count}
+                </button>
+              }
+              tooltip={renderCasesTooltip(p)}
+            />
           );
         })}
 
@@ -315,36 +483,36 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
         {casePoints.map((p) => {
           const size = markerSize(p.count);
           return (
-            <Marker
+            <HoverableMarker
               key={p.code}
               longitude={p.lng}
               latitude={p.lat}
-              anchor="center"
-            >
-              <button
-                type="button"
-                onClick={() => onCountryClick?.(p.countryCode)}
-                title={`${p.name}: ${p.count} case${p.count === 1 ? "" : "s"}`}
-                className="flex items-center justify-center font-bold text-white shadow-md cursor-pointer transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
-                style={{
-                  width: size,
-                  height: size,
-                  background: p.color,
-                  borderRadius: "9999px",
-                  border: "2px solid white",
-                  fontSize: size > 28 ? 14 : 11,
-                  lineHeight: 1,
-                }}
-                aria-label={`${p.name}: ${p.count} cases`}
-              >
-                {p.count}
-              </button>
-            </Marker>
+              trigger={
+                <button
+                  type="button"
+                  onClick={() => handleCaseMarkerClick(p)}
+                  className="flex items-center justify-center font-bold text-white shadow-md cursor-pointer transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                  style={{
+                    width: size,
+                    height: size,
+                    background: p.color,
+                    borderRadius: "9999px",
+                    border: "2px solid white",
+                    fontSize: size > 28 ? 14 : 11,
+                    lineHeight: 1,
+                  }}
+                  aria-label={`${p.name}: ${p.count} cases`}
+                >
+                  {p.count}
+                </button>
+              }
+              tooltip={renderCasesTooltip(p)}
+            />
           );
         })}
       </Map>
 
-      {/* Projection toggle, overlaid */}
+      {/* Projection toggle */}
       <div className="absolute top-3 left-3 z-10">
         <Button
           size="sm"
@@ -358,7 +526,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
         </Button>
       </div>
 
-      {/* Legend, overlaid bottom-left */}
+      {/* Legend */}
       <div className="absolute bottom-3 left-3 z-10 bg-background/90 backdrop-blur-sm rounded-md border border-border px-3 py-2 text-xs space-y-1.5">
         <div className="flex items-center gap-2">
           <span

@@ -4,6 +4,7 @@ import { CaseMapLazy } from "@/components/case-map-lazy";
 import { MetricCard } from "@/components/metric-card";
 import { CaseCard } from "@/components/case-card";
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 
 const cases = casesData as Case[];
 
@@ -102,21 +103,41 @@ export default function Home() {
         </p>
       </section>
 
-      <section aria-label="Recent cases" className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">All cases</h2>
-          <Link
-            href="/cases"
-            className="text-sm text-muted-foreground hover:text-foreground underline"
-          >
-            Full filterable list →
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {cases.map((c) => (
-            <CaseCard key={c.id} caseRow={c} />
-          ))}
-        </div>
+      <section aria-label="All cases">
+        <details className="group rounded-lg border border-border bg-card/40">
+          <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-3 hover:bg-muted/40 rounded-lg group-open:rounded-b-none transition-colors">
+            <div className="flex items-baseline gap-3">
+              <h2 className="text-xl font-semibold tracking-tight">
+                All cases
+              </h2>
+              <span className="text-sm text-muted-foreground">
+                {cases.length} row{cases.length === 1 ? "" : "s"}
+              </span>
+            </div>
+            <span className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="hidden sm:inline group-open:hidden">
+                Show
+              </span>
+              <span className="hidden sm:group-open:inline">Hide</span>
+              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+            </span>
+          </summary>
+          <div className="px-4 pb-4 pt-1 space-y-3">
+            <div className="flex items-center justify-end">
+              <Link
+                href="/cases"
+                className="text-xs text-muted-foreground hover:text-foreground underline"
+              >
+                Full filterable list →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {cases.map((c) => (
+                <CaseCard key={c.id} caseRow={c} />
+              ))}
+            </div>
+          </div>
+        </details>
       </section>
     </div>
   );
