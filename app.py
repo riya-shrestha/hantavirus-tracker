@@ -41,15 +41,21 @@ def load_cases():
 
 def headline_counts(cases):
     confirmed = sum(c["case_count"] for c in cases if c["case_type"] == "confirmed")
+    probable = sum(c["case_count"] for c in cases if c["case_type"] == "probable")
     suspected = sum(c["case_count"] for c in cases if c["case_type"] == "suspected")
     deaths = sum(c["case_count"] for c in cases if c["case_type"] == "death")
-    countries = len({c["country"] for c in cases})
-    return confirmed, suspected, deaths, countries
+    monitoring = sum(
+        c["case_count"] for c in cases if c["case_type"] == "contact_monitoring"
+    )
+    countries = len({c["country"] for c in cases if c["country"] != "XX"})
+    return confirmed, probable, suspected, deaths, monitoring, countries
 
 
 def country_totals(cases):
     rows = []
     for c in cases:
+        if c["country"] == "XX":
+            continue
         rows.append(
             {
                 "country_code": c["country"],
@@ -77,13 +83,20 @@ st.caption(
 )
 
 cases = load_cases()
-confirmed, suspected, deaths, countries = headline_counts(cases)
+confirmed, probable, suspected, deaths, monitoring, countries = headline_counts(cases)
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 col1.metric("Confirmed", confirmed)
-col2.metric("Suspected", suspected)
+col2.metric("Probable", probable)
 col3.metric("Deaths", deaths)
-col4.metric("Countries", countries)
+col4.metric("Under monitoring", monitoring, help="Asymptomatic contacts under public-health watch; not counted in WHO/ECDC headline cases")
+col5.metric("Countries", countries)
+
+st.caption(
+    f"**Headline total (per WHO 2026-DON600 / ECDC May 12 2026):** "
+    f"{confirmed + probable} confirmed/probable cases (incl. {deaths} deaths). "
+    f"Contact-monitoring population shown separately."
+)
 
 st.subheader("Where cases have been reported")
 df_countries = country_totals(cases)

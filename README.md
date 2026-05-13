@@ -20,24 +20,43 @@ App opens at http://localhost:8501.
 3. Click "New app" → point to this repo's `main` branch and `app.py`.
 4. Click Deploy. Live URL appears in ~1–2 minutes.
 
-## Data sources
+## Data sources (tiered)
 
-All cases in `data/cases.json` are hand-curated from:
+**Tier 1 — official health agencies** (the basis of headline counts):
+- WHO Disease Outbreak News — [DON600 (Hondius cluster)](https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600)
+- CDC HAN — [HAN00528 (US monitoring)](https://www.cdc.gov/han/php/notices/han00528.html)
+- ECDC threat reports — [Andes hantavirus outbreak, 12 May 2026](https://www.ecdc.europa.eu/en/infectious-disease-topics/hantavirus-infection/surveillance-and-updates/andes-hantavirus-outbreak)
+- National health agencies of affected countries: Dutch RIVM, German RKI, Swiss BAG/FOPH, South African NICD, UK UKHSA, US state health departments
 
-- **CDC HAN Notice HAN00528** — 2026 Multi-country Hantavirus Cluster Linked to Cruise Ship
-- **WHO Disease Outbreak News** — Andes virus updates
-- **NPR, CNN, TODAY** — national news coverage of the outbreak
+**Tier 2 — major news with health desks:**
+Reuters, AP, NPR, CNN, BBC, NYT, FT, Washington Post — plus regional equivalents (Time, TODAY).
 
-## Methodology
+**Tier 3 — expert-curated informal:**
+ProMED-mail, HealthMap, CIDRAP.
 
-This v0 includes only cases that are:
+**Tier 4 — aggregators / blogs:** not counted toward headline.
 
-1. **Linked to the MV Hondius cluster** — cruise passengers/crew OR documented human-to-human transmission from a cruise case.
-2. **Reported by tier-1 or tier-2 sources** — national health agencies (CDC, WHO) or major national news with health desks (Reuters, AP, NPR, CNN, BBC, NBC).
+## Case definition (matches WHO/ECDC convention)
 
-Cases are tracked **per-person where named individually**. Where reporting describes groups (e.g., "15 passengers monitored at UNMC"), a single aggregate row is used with `case_count` set to the group size.
+| `case_type` | Meaning |
+|---|---|
+| `confirmed` | Lab-positive for Andes virus |
+| `probable` | Clinically diagnosed; lab pending or negative but consistent epi link |
+| `suspected` | Symptomatic, no lab work yet |
+| `contact_monitoring` | Asymptomatic, exposed, under public-health watch — **not counted in headline** |
+| `death` | Deceased (confirmed or probable) |
 
-`case_type` is the original classification at first reporting. `current_status` is the latest known state and updates as situations develop.
+The headline total (currently 11) is `confirmed + probable + death`, matching WHO 2026-DON600. The contact-monitoring population (currently 20) is shown separately because it is epidemiologically distinct and not part of the official case tally.
+
+## Inclusion criteria
+
+A case is included if and only if it is **demonstrably linked to the MV Hondius cluster** — i.e., the person was a passenger/crew member, OR is a documented human-to-human secondary transmission from a Hondius case. Endemic Andes virus cases in Argentina/Chile unconnected to the cruise are explicitly excluded.
+
+## Counting conventions
+
+- **One row per named individual.** Where reporting describes an unnamed group (e.g., "15 passengers monitored at UNMC"), a single aggregate row is used with `case_count` set to the group size and notes describing the cluster.
+- **Country = primary attribution from official reporting**, typically nationality (the Dutch couple is `NL` regardless of where they died; the British dual-national is `GB`). Location of treatment is noted in the row but doesn't change the country code.
+- **`case_type` is frozen** at original classification. `current_status` updates over time (a `suspected` case becoming lab-confirmed gets `current_status: confirmed` but keeps `case_type: suspected`).
 
 ## Schema (`data/cases.json`)
 
