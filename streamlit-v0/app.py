@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-DATA_PATH = Path(__file__).parent / "data" / "cases.json"
+DATA_PATH = Path(__file__).parent.parent / "data" / "cases.json"
 
 COUNTRY_NAMES = {
     "US": "United States",
