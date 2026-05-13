@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
+import type maplibregl from "maplibre-gl";
 import Map, {
   Marker,
   Source,
@@ -203,6 +204,103 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
   const markerSize = (count: number) =>
     Math.max(18, Math.min(56, Math.sqrt(count) * 9));
 
+  // OpenFreeMap's dark-matter style is near-black, which clashes with the
+  // shadcn slate dark theme. After the map loads, soften it by overriding
+  // the background / water / land fills to slate-family colors. Layer IDs
+  // come from the dark-matter style schema (Carto / Maputnik convention).
+  const applyDarkSlatePalette = useCallback(
+    (map: maplibregl.Map) => {
+      const layers = map.getStyle().layers ?? [];
+      const setIf = (
+        layerId: string,
+        prop: string,
+        value: string,
+      ) => {
+        try {
+          if (map.getLayer(layerId)) {
+            map.setPaintProperty(layerId, prop, value);
+          }
+        } catch {
+          /* style may have changed; ignore */
+        }
+      };
+
+      // Slate palette matching shadcn dark theme
+      const slate900 = "#0f172a";
+      const slate800 = "#1e293b";
+      const slate700 = "#334155";
+      const slate600 = "#475569";
+      const slate300 = "#cbd5e1";
+
+      // 1) Background: slate-800 instead of near-black
+      setIf("background", "background-color", slate800);
+
+      // 2) Water: slate-900 (slightly darker than land for visual depth)
+      for (const l of layers) {
+        if (l.type === "fill" && /water|ocean|sea/i.test(l.id)) {
+          setIf(l.id, "fill-color", slate900);
+        }
+        if (l.type === "line" && /waterway|river|stream/i.test(l.id)) {
+          setIf(l.id, "line-color", slate900);
+        }
+      }
+
+      // 3) Landcover / landuse / parks: subtle variation around slate-800
+      for (const l of layers) {
+        if (
+          l.type === "fill" &&
+          /(landcover|landuse|park|grass|wood|forest|farmland|sand|rock|residential)/i.test(
+            l.id,
+          )
+        ) {
+          setIf(l.id, "fill-color", slate700);
+          // The dark-matter style sometimes uses fill-opacity to dim layers;
+          // bump it so our slate color isn't washed out by transparency.
+          try {
+            map.setPaintProperty(l.id, "fill-opacity", 0.6);
+          } catch {
+            /* not all layers expose fill-opacity */
+          }
+        }
+      }
+
+      // 4) Boundaries (country / state) — visible but not loud
+      for (const l of layers) {
+        if (l.type === "line" && /boundary|border|admin/i.test(l.id)) {
+          setIf(l.id, "line-color", slate600);
+          try {
+            map.setPaintProperty(l.id, "line-opacity", 0.7);
+          } catch {
+            /* */
+          }
+        }
+      }
+
+      // 5) Place labels: brighter so they're readable on slate
+      for (const l of layers) {
+        if (l.type === "symbol" && /place|country|state|city/i.test(l.id)) {
+          setIf(l.id, "text-color", slate300);
+          try {
+            map.setPaintProperty(l.id, "text-halo-color", slate900);
+            map.setPaintProperty(l.id, "text-halo-width", 1.2);
+          } catch {
+            /* */
+          }
+        }
+      }
+    },
+    [],
+  );
+
+  const handleMapLoad = useCallback(
+    (evt: { target: maplibregl.Map }) => {
+      if (isDark) {
+        applyDarkSlatePalette(evt.target);
+      }
+    },
+    [isDark, applyDarkSlatePalette],
+  );
+
   return (
     <div className="relative w-full h-[520px] rounded-lg overflow-hidden border border-border">
       {/* `key={mapStyle}` forces a clean remount when the user toggles light/dark.
@@ -219,6 +317,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
         renderWorldCopies={projection === "mercator"}
         minZoom={0.5}
         maxZoom={8}
+        onLoad={handleMapLoad}
       >
         <NavigationControl position="top-right" showCompass={false} />
 
