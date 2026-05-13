@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type maplibregl from "maplibre-gl";
 import Map, {
   Marker,
   Source,
@@ -16,11 +15,13 @@ import { countryCoords } from "@/data/country-coords";
 import { usStateCoords } from "@/data/us-state-coords";
 import { cruiseRoute } from "@/data/cruise-route";
 import { passengerDestinations } from "@/data/passenger-destinations";
+import { darkSlateStyle } from "@/data/dark-slate-style";
 import { Button } from "@/components/ui/button";
 
-// OpenFreeMap — free vector tile hosting, no API key.
+// Light: OpenFreeMap's positron (clean, neutral, well-tuned).
+// Dark: our own custom style — uses OpenFreeMap's vector tiles but with
+// explicit slate colors so we know exactly what we're rendering.
 const STYLE_LIGHT = "https://tiles.openfreemap.org/styles/positron";
-const STYLE_DARK = "https://tiles.openfreemap.org/styles/dark-matter";
 
 // Distinct hues for the three marker types so they're easy to tell apart
 const SEVERITY_COLOR: Record<string, string> = {
@@ -187,7 +188,12 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
     [],
   );
 
-  const mapStyle = isDark ? STYLE_DARK : STYLE_LIGHT;
+  // mapStyle is a string URL for light (positron from OpenFreeMap) and an
+  // inline StyleSpecification object for dark (our slate style). MapLibre
+  // accepts either.
+  const mapStyle = isDark ? darkSlateStyle : STYLE_LIGHT;
+  // Stable string key so the Map remounts cleanly when the theme toggles.
+  const mapStyleKey = isDark ? "slate-dark" : "openfreemap-positron";
 
   const cruiseLineLayer: LayerProps = {
     id: "cruise-route-line",
@@ -204,110 +210,12 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
   const markerSize = (count: number) =>
     Math.max(18, Math.min(56, Math.sqrt(count) * 9));
 
-  // OpenFreeMap's dark-matter style is near-black, which clashes with the
-  // shadcn slate dark theme. After the map loads, soften it by overriding
-  // the background / water / land fills to slate-family colors. Layer IDs
-  // come from the dark-matter style schema (Carto / Maputnik convention).
-  const applyDarkSlatePalette = useCallback(
-    (map: maplibregl.Map) => {
-      const layers = map.getStyle().layers ?? [];
-      const setIf = (
-        layerId: string,
-        prop: string,
-        value: string,
-      ) => {
-        try {
-          if (map.getLayer(layerId)) {
-            map.setPaintProperty(layerId, prop, value);
-          }
-        } catch {
-          /* style may have changed; ignore */
-        }
-      };
-
-      // Slate palette matching shadcn dark theme
-      const slate900 = "#0f172a";
-      const slate800 = "#1e293b";
-      const slate700 = "#334155";
-      const slate600 = "#475569";
-      const slate300 = "#cbd5e1";
-
-      // 1) Background: slate-800 instead of near-black
-      setIf("background", "background-color", slate800);
-
-      // 2) Water: slate-900 (slightly darker than land for visual depth)
-      for (const l of layers) {
-        if (l.type === "fill" && /water|ocean|sea/i.test(l.id)) {
-          setIf(l.id, "fill-color", slate900);
-        }
-        if (l.type === "line" && /waterway|river|stream/i.test(l.id)) {
-          setIf(l.id, "line-color", slate900);
-        }
-      }
-
-      // 3) Landcover / landuse / parks: subtle variation around slate-800
-      for (const l of layers) {
-        if (
-          l.type === "fill" &&
-          /(landcover|landuse|park|grass|wood|forest|farmland|sand|rock|residential)/i.test(
-            l.id,
-          )
-        ) {
-          setIf(l.id, "fill-color", slate700);
-          // The dark-matter style sometimes uses fill-opacity to dim layers;
-          // bump it so our slate color isn't washed out by transparency.
-          try {
-            map.setPaintProperty(l.id, "fill-opacity", 0.6);
-          } catch {
-            /* not all layers expose fill-opacity */
-          }
-        }
-      }
-
-      // 4) Boundaries (country / state) — visible but not loud
-      for (const l of layers) {
-        if (l.type === "line" && /boundary|border|admin/i.test(l.id)) {
-          setIf(l.id, "line-color", slate600);
-          try {
-            map.setPaintProperty(l.id, "line-opacity", 0.7);
-          } catch {
-            /* */
-          }
-        }
-      }
-
-      // 5) Place labels: brighter so they're readable on slate
-      for (const l of layers) {
-        if (l.type === "symbol" && /place|country|state|city/i.test(l.id)) {
-          setIf(l.id, "text-color", slate300);
-          try {
-            map.setPaintProperty(l.id, "text-halo-color", slate900);
-            map.setPaintProperty(l.id, "text-halo-width", 1.2);
-          } catch {
-            /* */
-          }
-        }
-      }
-    },
-    [],
-  );
-
-  const handleMapLoad = useCallback(
-    (evt: { target: maplibregl.Map }) => {
-      if (isDark) {
-        applyDarkSlatePalette(evt.target);
-      }
-    },
-    [isDark, applyDarkSlatePalette],
-  );
-
   return (
     <div className="relative w-full h-[520px] rounded-lg overflow-hidden border border-border">
-      {/* `key={mapStyle}` forces a clean remount when the user toggles light/dark.
-          MapLibre will otherwise sometimes hold onto the previous style when
-          mapStyle prop changes, leaving a mismatched basemap. */}
+      {/* `key={mapStyleKey}` forces a clean remount when the user toggles
+          light/dark, so MapLibre fully reloads the new style. */}
       <Map
-        key={mapStyle}
+        key={mapStyleKey}
         initialViewState={{ longitude: -8, latitude: 20, zoom: 1.8 }}
         style={{ width: "100%", height: "100%" }}
         mapStyle={mapStyle}
@@ -317,7 +225,6 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
         renderWorldCopies={projection === "mercator"}
         minZoom={0.5}
         maxZoom={8}
-        onLoad={handleMapLoad}
       >
         <NavigationControl position="top-right" showCompass={false} />
 
