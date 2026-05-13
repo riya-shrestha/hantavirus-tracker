@@ -59,12 +59,18 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
   const [projection, setProjection] = useState<"globe" | "mercator">("globe");
 
   // Build per-region points (US split by state, others by country).
+  // Bubble counts include only headline case types (confirmed/probable/
+  // suspected/death) — NOT contact_monitoring, to match the WHO/ECDC
+  // headline convention and the metric cards at the top of the page.
+  // Contact monitoring is surfaced in the "Under monitoring" metric and
+  // in the case cards below, not on the map.
   const points = useMemo<Point[]>(() => {
     const usByState: Record<string, { count: number; types: Set<string> }> = {};
     const byCountry: Record<string, { count: number; types: Set<string> }> = {};
 
     for (const c of cases) {
       if (c.country === "XX") continue;
+      if (c.case_type === "contact_monitoring") continue;
       if (c.country === "US" && c.admin1 && usStateCoords[c.admin1]) {
         const e = (usByState[c.admin1] ??= { count: 0, types: new Set() });
         e.count += c.case_count;
@@ -255,13 +261,9 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
           />
           <span className="text-muted-foreground">Probable</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className="inline-block w-3 h-3 rounded-full"
-            style={{ background: SEVERITY_COLOR.contact_monitoring }}
-          />
-          <span className="text-muted-foreground">Monitoring</span>
-        </div>
+        <p className="pt-1 text-[10px] text-muted-foreground/80">
+          Monitoring not shown
+        </p>
       </div>
     </div>
   );

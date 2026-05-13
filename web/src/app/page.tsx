@@ -78,12 +78,23 @@ export default function Home() {
         <p className="mt-2 text-xs text-muted-foreground">
           MapLibre GL + OpenFreeMap vector tiles (no API key). Toggle
           between 3D globe (drag to rotate freely) and 2D Mercator
-          (infinite horizontal scroll). US cases split by state (NE / GA /
-          NJ) — each region marked by a proportional circle sized by case
-          count, colored by worst-severity (slate = deaths, red = confirmed,
-          purple = probable, blue = monitoring). Orange dashed line traces
-          the MV Hondius cruise route (Ushuaia → Tenerife, Apr 1 – May 10,
-          2026).
+          (infinite horizontal scroll). Bubbles show only the case types in
+          the headline (confirmed + probable + death) — contact-monitoring
+          is shown in the metric above and the case cards below, but not
+          plotted, to keep the map and headline consistent. Bubble color
+          reflects worst-severity (slate = deaths, red = confirmed, purple
+          = probable). Orange dashed line traces the MV Hondius cruise
+          route (Ushuaia → Tenerife, Apr 1 – May 10, 2026).{" "}
+          <strong>Note:</strong> 5 of the {h.confirmed + h.probable + h.deaths}{" "}
+          headline cases are in an unlocalized aggregate (per WHO 2026-DON600)
+          and can&apos;t be plotted yet — see{" "}
+          <Link
+            href="/cases/case-007-who-other-confirmed-probable"
+            className="underline hover:text-foreground"
+          >
+            case-007
+          </Link>
+          . They&apos;ll split out into specific countries as confirmations land.
         </p>
       </section>
 
