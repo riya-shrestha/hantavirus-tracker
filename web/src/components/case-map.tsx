@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import {
+  useMemo,
+  useState,
+  useRef,
+  type ReactNode,
+} from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import Map, {
   Marker,
@@ -11,7 +16,23 @@ import Map, {
 } from "react-map-gl/maplibre";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ArrowRight } from "lucide-react";
+import {
+  useFloating,
+  useHover,
+  useFocus,
+  useInteractions,
+  useDismiss,
+  useRole,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  arrow,
+  safePolygon,
+  FloatingPortal,
+  FloatingArrow,
+} from "@floating-ui/react";
 import type { Case, CaseType } from "@/lib/types";
 import { countryCoords } from "@/data/country-coords";
 import { usStateCoords } from "@/data/us-state-coords";
@@ -21,6 +42,11 @@ import {
   type PassengerDestination,
 } from "@/data/passenger-destinations";
 import { darkSlateStyle } from "@/data/dark-slate-style";
+import {
+  pickTopSources,
+  totalSourceCount,
+  tierClasses,
+} from "@/lib/source-tier";
 import { Button } from "@/components/ui/button";
 import { CaseBadge } from "@/components/case-badge";
 
@@ -53,7 +79,7 @@ interface Point {
   name: string;
   count: number;
   color: string;
-  cases: Case[]; // underlying case rows that fed this point
+  cases: Case[];
   primaryType: CaseType;
 }
 
@@ -62,129 +88,311 @@ interface CaseMapProps {
   onCountryClick?: (code: string) => void;
 }
 
-/**
- * Liquid-glass card rendered above a map marker.
- *
- * - Heavy backdrop blur + saturation boost
- * - Subtle specular highlight on the top edge
- * - Inner gradient sheen from top-left
- * - Soft inner ring for depth
- *
- * When `interactive` is false, the card has pointer-events-none so it never
- * blocks the underlying marker. When the user expands the card, it switches
- * to pointer-events-auto so they can interact (scroll, click links, toggle).
- */
-function LiquidGlassCard({
+function caseTypeLabel(t: CaseType, count: number): string {
+  if (t === "death") return count === 1 ? "death" : "deaths";
+  if (t === "contact_monitoring")
+    return count === 1
+      ? "individual under monitoring"
+      : "individuals under monitoring";
+  return count === 1 ? `${t} case` : `${t} cases`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Liquid-glass shell
+// ─────────────────────────────────────────────────────────────────────────
+
+function LiquidGlass({
   children,
-  interactive,
-  wide,
+  arrowSlot,
 }: {
   children: ReactNode;
-  interactive: boolean;
-  wide: boolean;
+  arrowSlot?: ReactNode;
 }) {
   return (
-    <div
-      className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-3 ${
-        interactive ? "pointer-events-auto" : "pointer-events-none"
-      } ${wide ? "w-80" : "w-72"}`}
-    >
-      <div className="relative overflow-hidden rounded-2xl border border-white/15 dark:border-white/10 bg-background/30 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.4)] ring-1 ring-black/5 dark:ring-white/5">
-        {/* Top-edge specular highlight */}
+    <div className="relative overflow-visible">
+      <div className="relative w-72 overflow-hidden rounded-2xl border border-white/15 dark:border-white/10 bg-background/30 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.45)] ring-1 ring-black/5 dark:ring-white/5">
+        {/* top-edge specular highlight */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-        {/* Diagonal sheen */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-transparent dark:from-white/4" />
-        {/* Content */}
-        <div className="relative p-3.5 text-foreground text-sm space-y-2">
+        {/* diagonal sheen */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent dark:from-white/5" />
+        <div className="relative p-3.5 text-foreground text-sm space-y-2.5">
           {children}
         </div>
       </div>
+      {arrowSlot}
     </div>
   );
 }
 
-/**
- * Marker wrapper with a hoverable region, glass-card tooltip, and an
- * expand/collapse tab at the bottom. Expanded state bumps the marker's
- * outer z-index so sibling markers don't paint on top of the card.
- */
-function HoverableMarker({
-  longitude,
-  latitude,
-  offset,
-  trigger,
-  compact,
-  expanded,
-}: {
+// ─────────────────────────────────────────────────────────────────────────
+// Hover-controlled floating marker (Floating UI handles position + bridge)
+// ─────────────────────────────────────────────────────────────────────────
+
+interface HoverableMarkerProps {
   longitude: number;
   latitude: number;
   offset?: [number, number];
   trigger: ReactNode;
-  compact: ReactNode;
-  expanded: ReactNode | null; // null = no expand-tab for this marker (e.g., passenger dots)
-}) {
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const show = hovered || focused || isExpanded;
-  const expandable = expanded != null;
+  panel: ReactNode;
+}
+
+function HoverableMarker({
+  longitude,
+  latitude,
+  offset: markerOffset,
+  trigger,
+  panel,
+}: HoverableMarkerProps) {
+  const [open, setOpen] = useState(false);
+  const arrowRef = useRef<SVGSVGElement | null>(null);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
+  // Arrow background — match the glass card's outer color (very translucent
+  // so the gradient + blur on the card shows through).
+  const arrowFill = isDark ? "rgba(15, 23, 42, 0.45)" : "rgba(255, 255, 255, 0.45)";
+  const arrowStroke = isDark ? "rgba(255, 255, 255, 0.10)" : "rgba(0, 0, 0, 0.05)";
+
+  const { refs, floatingStyles, context } = useFloating({
+    open,
+    onOpenChange: setOpen,
+    whileElementsMounted: autoUpdate,
+    placement: "top",
+    strategy: "fixed",
+    middleware: [
+      offset(10),
+      flip({
+        fallbackPlacements: ["bottom", "right", "left"],
+      }),
+      shift({ padding: 12 }),
+      arrow({ element: arrowRef, padding: 8 }),
+    ],
+  });
+
+  const hover = useHover(context, {
+    move: false,
+    handleClose: safePolygon({
+      buffer: 4,
+      blockPointerEvents: false,
+    }),
+    delay: { open: 60, close: 0 },
+  });
+  const focus = useFocus(context);
+  const dismiss = useDismiss(context, { escapeKey: true });
+  const role = useRole(context, { role: "tooltip" });
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    hover,
+    focus,
+    dismiss,
+    role,
+  ]);
 
   return (
     <Marker
       longitude={longitude}
       latitude={latitude}
       anchor="center"
-      offset={offset}
-      // Bump z-index of the entire marker (and its tooltip) above siblings
-      // when active. Without this, other markers paint on top of the card.
-      style={{ zIndex: show ? 1000 : undefined }}
+      offset={markerOffset}
     >
       <div
-        className="relative"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        ref={refs.setReference}
+        {...getReferenceProps()}
+        className="inline-block"
       >
         {trigger}
-        {show && (
-          <LiquidGlassCard
-            interactive={isExpanded}
-            wide={isExpanded}
-          >
-            {isExpanded ? expanded : compact}
-            {expandable && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsExpanded((v) => !v);
-                }}
-                // pointer-events-auto so the button works even when the
-                // surrounding card is pointer-events-none (compact state).
-                className="pointer-events-auto group/expand mt-1 -mb-1 -mx-1 px-3 py-1.5 w-[calc(100%+0.5rem)] flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5 rounded-md transition-colors border-t border-white/10 dark:border-white/5"
-              >
-                <span>{isExpanded ? "Show less" : "Show full notes"}</span>
-                <ChevronDown
-                  className={`h-3 w-3 transition-transform ${
-                    isExpanded ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-            )}
-          </LiquidGlassCard>
-        )}
       </div>
+
+      {open && (
+        <FloatingPortal>
+          <div
+            ref={refs.setFloating}
+            style={{ ...floatingStyles, zIndex: 9999 }}
+            {...getFloatingProps()}
+          >
+            <LiquidGlass
+              arrowSlot={
+                <FloatingArrow
+                  ref={arrowRef}
+                  context={context}
+                  width={16}
+                  height={8}
+                  fill={arrowFill}
+                  stroke={arrowStroke}
+                  strokeWidth={1}
+                />
+              }
+            >
+              {panel}
+            </LiquidGlass>
+          </div>
+        </FloatingPortal>
+      )}
     </Marker>
   );
 }
 
-function caseTypeLabel(t: CaseType, count: number): string {
-  if (t === "death") return count === 1 ? "death" : "deaths";
-  if (t === "contact_monitoring")
-    return count === 1 ? "individual under monitoring" : "individuals under monitoring";
-  return count === 1 ? `${t} case` : `${t} cases`;
+// ─────────────────────────────────────────────────────────────────────────
+// Panel content components
+// ─────────────────────────────────────────────────────────────────────────
+
+function CaseSourceList({
+  cases,
+}: {
+  cases: Case[];
+}) {
+  const top = pickTopSources(cases, 3);
+  const totalCount = totalSourceCount(cases);
+  if (top.length === 0) return null;
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+        Sources ({totalCount})
+      </p>
+      <ul className="space-y-1">
+        {top.map((s, i) => (
+          <li
+            key={s.url}
+            className="flex items-start gap-1.5 text-xs leading-snug"
+          >
+            <span
+              className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[10px] font-medium border ${tierClasses(s.tier)}`}
+            >
+              T{s.tier}
+              {i === 0 ? " · NEW" : ""}
+            </span>
+            <a
+              href={s.url}
+              target="_blank"
+              rel="noopener"
+              className="text-foreground/90 hover:underline truncate"
+              title={`${s.source_name} — ${s.title}`}
+            >
+              <span className="text-muted-foreground">{s.source_name}:</span>{" "}
+              <span>{s.title}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
+
+function CasePanel({ point }: { point: Point }) {
+  const [notesExpanded, setNotesExpanded] = useState(false);
+  const firstCase = point.cases[0];
+
+  return (
+    <>
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+          {point.name}
+        </p>
+        <CaseBadge type={point.primaryType} />
+      </div>
+      <p className="text-base font-semibold leading-tight">
+        {point.count} {caseTypeLabel(point.primaryType, point.count)}
+      </p>
+
+      {/* Notes — collapsible inline */}
+      <div className="space-y-1.5">
+        {notesExpanded ? (
+          // Expanded: full notes for every case row, scrollable if many
+          <div className="max-h-56 overflow-y-auto space-y-2.5 pr-1">
+            {point.cases.map((c, i) => (
+              <div key={c.id} className="space-y-0.5">
+                {point.cases.length > 1 && (
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                    Case {i + 1}
+                  </p>
+                )}
+                <p className="text-sm text-foreground/90 leading-snug">
+                  {c.notes}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Compact: up to 2 truncated notes
+          <ul className="space-y-1">
+            {point.cases.slice(0, 2).map((c) => (
+              <li key={c.id} className="text-sm leading-snug text-foreground/85">
+                <span className="text-muted-foreground">·</span>{" "}
+                <span className="line-clamp-2">{c.notes}</span>
+              </li>
+            ))}
+            {point.cases.length > 2 && (
+              <li className="text-xs text-muted-foreground italic pl-3">
+                + {point.cases.length - 2} more case row
+                {point.cases.length - 2 === 1 ? "" : "s"}
+              </li>
+            )}
+          </ul>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setNotesExpanded((v) => !v)}
+          className="w-full flex items-center justify-center gap-1.5 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground bg-white/5 hover:bg-white/10 dark:bg-white/5 dark:hover:bg-white/10 border border-white/10 rounded-md transition-colors"
+        >
+          <span>
+            {notesExpanded
+              ? "Show less"
+              : point.cases.length > 1
+                ? `Show full notes (${point.cases.length} cases)`
+                : "Show full notes"}
+          </span>
+          <ChevronDown
+            className={`h-3 w-3 transition-transform ${notesExpanded ? "rotate-180" : ""}`}
+          />
+        </button>
+      </div>
+
+      {/* Sources — always visible */}
+      <CaseSourceList cases={point.cases} />
+
+      {/* CTA — always visible */}
+      <Link
+        href={`/cases/${firstCase.id}`}
+        className="flex items-center justify-center gap-1.5 w-full px-3 py-1.5 text-xs font-semibold bg-foreground text-background hover:bg-foreground/90 rounded-md transition-colors"
+      >
+        <span>
+          {point.cases.length === 1
+            ? "Open case page"
+            : `Open case page (1 of ${point.cases.length})`}
+        </span>
+        <ArrowRight className="h-3 w-3" />
+      </Link>
+    </>
+  );
+}
+
+function PassengerPanel({ d }: { d: PassengerDestination }) {
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <span
+          className="inline-block w-2.5 h-2.5 rounded-full"
+          style={{ background: PASSENGER_COLOR }}
+        />
+        <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+          Passenger destination
+        </p>
+      </div>
+      <p className="text-base font-semibold">{d.label}</p>
+      <p className="text-sm text-foreground/85 leading-snug">{d.note}</p>
+      <p className="text-xs text-muted-foreground pt-1.5 border-t border-white/10">
+        No confirmed cases yet
+      </p>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Main map component
+// ─────────────────────────────────────────────────────────────────────────
 
 export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
   const { resolvedTheme } = useTheme();
@@ -227,16 +435,17 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
     }
 
     const out: Point[] = [];
+    const pickPrimary = (types: Set<CaseType>): CaseType =>
+      types.has("death")
+        ? "death"
+        : types.has("confirmed")
+          ? "confirmed"
+          : types.has("probable")
+            ? "probable"
+            : "suspected";
+
     for (const [stateCode, info] of Object.entries(usByState)) {
       const s = usStateCoords[stateCode];
-      const primary: CaseType =
-        info.types.has("death")
-          ? "death"
-          : info.types.has("confirmed")
-            ? "confirmed"
-            : info.types.has("probable")
-              ? "probable"
-              : "suspected";
       out.push({
         code: `case-${stateCode}`,
         countryCode: "US",
@@ -246,19 +455,11 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
         count: info.count,
         color: pickSeverity(info.types),
         cases: info.cases,
-        primaryType: primary,
+        primaryType: pickPrimary(info.types),
       });
     }
     for (const [code, info] of Object.entries(byCountry)) {
       const ci = countryCoords[code];
-      const primary: CaseType =
-        info.types.has("death")
-          ? "death"
-          : info.types.has("confirmed")
-            ? "confirmed"
-            : info.types.has("probable")
-              ? "probable"
-              : "suspected";
       out.push({
         code: `case-${code}`,
         countryCode: code,
@@ -268,7 +469,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
         count: info.count,
         color: pickSeverity(info.types),
         cases: info.cases,
-        primaryType: primary,
+        primaryType: pickPrimary(info.types),
       });
     }
     return out;
@@ -377,121 +578,6 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
   const markerSize = (count: number) =>
     Math.max(18, Math.min(56, Math.sqrt(count) * 9));
 
-  // ---- Tooltip content builders ----
-
-  const totalSources = (p: Point) =>
-    p.cases.reduce((s, c) => s + c.source_articles.length, 0);
-
-  // Compact tooltip — short, glanceable.
-  const renderCasesCompact = (p: Point) => (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-          {p.name}
-        </p>
-        <CaseBadge type={p.primaryType} />
-      </div>
-      <p className="text-base font-semibold">
-        {p.count} {caseTypeLabel(p.primaryType, p.count)}
-      </p>
-      <ul className="space-y-1.5 text-sm text-foreground/85">
-        {p.cases.slice(0, 2).map((c) => (
-          <li key={c.id} className="leading-snug">
-            <span className="text-muted-foreground">·</span>{" "}
-            <span className="line-clamp-2">{c.notes}</span>
-          </li>
-        ))}
-        {p.cases.length > 2 && (
-          <li className="text-xs text-muted-foreground italic">
-            + {p.cases.length - 2} more case row
-            {p.cases.length - 2 === 1 ? "" : "s"}
-          </li>
-        )}
-      </ul>
-      <p className="text-xs text-muted-foreground pt-1.5 border-t border-white/10">
-        {totalSources(p)} source article
-        {totalSources(p) === 1 ? "" : "s"}
-      </p>
-    </>
-  );
-
-  // Expanded tooltip — full notes, all sources, link to detail page.
-  const renderCasesExpanded = (p: Point) => (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-          {p.name}
-        </p>
-        <CaseBadge type={p.primaryType} />
-      </div>
-      <p className="text-base font-semibold">
-        {p.count} {caseTypeLabel(p.primaryType, p.count)}
-      </p>
-      <div className="max-h-72 overflow-y-auto space-y-3 -mx-1 px-1">
-        {p.cases.map((c, i) => (
-          <div key={c.id} className="space-y-1.5">
-            {p.cases.length > 1 && (
-              <p className="text-xs font-medium text-muted-foreground">
-                Case {i + 1}
-              </p>
-            )}
-            <p className="text-sm text-foreground/90 leading-snug">
-              {c.notes}
-            </p>
-            <ul className="text-xs text-muted-foreground space-y-0.5 pl-2">
-              {c.source_articles.map((src) => (
-                <li key={src.url} className="truncate">
-                  <span className="text-foreground/70">{src.source_name}:</span>{" "}
-                  <a
-                    href={src.url}
-                    target="_blank"
-                    rel="noopener"
-                    className="hover:text-foreground hover:underline"
-                  >
-                    {src.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <p className="text-xs text-muted-foreground/80">
-              Reported {c.date_reported}
-            </p>
-          </div>
-        ))}
-      </div>
-      {p.cases.length > 0 && (
-        <Link
-          href={`/cases/${p.cases[0].id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="block text-xs text-muted-foreground hover:text-foreground underline pt-1.5 border-t border-white/10"
-        >
-          {p.cases.length === 1
-            ? "Open full case page →"
-            : `Open first case page → (${p.cases.length} rows total)`}
-        </Link>
-      )}
-    </>
-  );
-
-  const renderPassengerCompact = (d: PassengerDestination) => (
-    <>
-      <div className="flex items-center gap-2">
-        <span
-          className="inline-block w-2.5 h-2.5 rounded-full"
-          style={{ background: PASSENGER_COLOR }}
-        />
-        <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-          Passenger destination
-        </p>
-      </div>
-      <p className="text-base font-semibold">{d.label}</p>
-      <p className="text-sm text-foreground/85 leading-snug">{d.note}</p>
-      <p className="text-xs text-muted-foreground pt-1.5 border-t border-white/10">
-        No confirmed cases yet
-      </p>
-    </>
-  );
-
   return (
     <div className="relative w-full h-[520px] rounded-lg overflow-hidden border border-border">
       <Map
@@ -513,7 +599,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
           <Layer {...cruiseLineLayer} />
         </Source>
 
-        {/* Cruise waypoint dots (basic title tooltip, no glass card) */}
+        {/* Cruise waypoint dots (basic title tooltip) */}
         {cruiseRoute.map((wp, i) => (
           <Marker
             key={`wp-${i}`}
@@ -535,7 +621,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
           </Marker>
         ))}
 
-        {/* Passenger-destination yellow dots */}
+        {/* Passenger destinations */}
         {passengerPoints.map((d) => (
           <HoverableMarker
             key={`pax-${d.country}-${d.admin1 ?? ""}`}
@@ -552,8 +638,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
                 }}
               />
             }
-            compact={renderPassengerCompact(d)}
-            expanded={null}
+            panel={<PassengerPanel d={d} />}
           />
         ))}
 
@@ -585,13 +670,12 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
                   {p.count}
                 </button>
               }
-              compact={renderCasesCompact(p)}
-              expanded={renderCasesExpanded(p)}
+              panel={<CasePanel point={p} />}
             />
           );
         })}
 
-        {/* Case markers — severity-colored, on top */}
+        {/* Case markers — on top */}
         {casePoints.map((p) => {
           const size = markerSize(p.count);
           return (
@@ -618,8 +702,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
                   {p.count}
                 </button>
               }
-              compact={renderCasesCompact(p)}
-              expanded={renderCasesExpanded(p)}
+              panel={<CasePanel point={p} />}
             />
           );
         })}

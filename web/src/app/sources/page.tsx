@@ -2,6 +2,7 @@ import casesData from "@/data/cases.json";
 import type { Case } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { tierOf, tierClasses } from "@/lib/source-tier";
 
 const cases = casesData as Case[];
 
@@ -10,52 +11,6 @@ export const metadata = {
   description:
     "Every news article and official report used to compile the Hondius outbreak tracker.",
 };
-
-// Tier rubric, kept inline for v1.0. Will move to /pipeline/sources.yml when the
-// Python pipeline lands.
-const TIER_HINTS: { [key: string]: 1 | 2 | 3 | 4 } = {
-  "CDC HAN": 1,
-  "WHO DON": 1,
-  ECDC: 1,
-  PAHO: 1,
-  RIVM: 1,
-  RKI: 1,
-  BAG: 1,
-  NICD: 1,
-  UKHSA: 1,
-  Reuters: 2,
-  AP: 2,
-  NPR: 2,
-  CNN: 2,
-  BBC: 2,
-  NYT: 2,
-  TODAY: 2,
-  ProMED: 3,
-  HealthMap: 3,
-};
-
-function tierOf(sourceName: string): 1 | 2 | 3 | 4 {
-  // Direct match
-  if (sourceName in TIER_HINTS) return TIER_HINTS[sourceName];
-  // Prefix match (e.g., "Reuters Health" -> Reuters)
-  for (const [hint, tier] of Object.entries(TIER_HINTS)) {
-    if (sourceName.toLowerCase().includes(hint.toLowerCase())) return tier;
-  }
-  return 4;
-}
-
-function tierClasses(t: number) {
-  switch (t) {
-    case 1:
-      return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50";
-    case 2:
-      return "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-900/50";
-    case 3:
-      return "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-900/50";
-    default:
-      return "bg-slate-100 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300";
-  }
-}
 
 export default function SourcesPage() {
   // Aggregate by source name, count case references and collect URLs
