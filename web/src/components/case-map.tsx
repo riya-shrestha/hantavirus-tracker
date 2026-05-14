@@ -45,11 +45,7 @@ import {
   type PassengerDestination,
 } from "@/data/passenger-destinations";
 import { darkSlateStyle } from "@/data/dark-slate-style";
-import {
-  pickTopSources,
-  totalSourceCount,
-  tierClasses,
-} from "@/lib/source-tier";
+import { pickTopSources, totalSourceCount } from "@/lib/source-tier";
 import { Button } from "@/components/ui/button";
 import { CaseBadge } from "@/components/case-badge";
 
@@ -272,22 +268,13 @@ function CaseSourceList({
         Sources ({totalCount})
       </p>
       <ul className="space-y-1">
-        {top.map((s, i) => (
-          <li
-            key={s.url}
-            className="flex items-start gap-1.5 text-xs leading-snug"
-          >
-            <span
-              className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[10px] font-medium border ${tierClasses(s.tier)}`}
-            >
-              T{s.tier}
-              {i === 0 ? " · NEW" : ""}
-            </span>
+        {top.map((s) => (
+          <li key={s.url} className="text-xs leading-snug">
             <a
               href={s.url}
               target="_blank"
               rel="noopener"
-              className="text-foreground/90 hover:underline truncate"
+              className="text-foreground/90 hover:underline"
               title={`${s.source_name} — ${s.title}`}
             >
               <span className="text-muted-foreground">{s.source_name}:</span>{" "}
