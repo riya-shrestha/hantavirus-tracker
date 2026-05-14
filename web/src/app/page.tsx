@@ -76,31 +76,6 @@ export default function Home() {
 
       <section aria-label="World map">
         <CaseMapLazy cases={cases} />
-        <p className="mt-2 text-xs text-muted-foreground">
-          MapLibre GL + OpenFreeMap (no API key); follows your light/dark
-          theme. Toggle 3D globe (drag to rotate freely) vs. 2D Mercator
-          (infinite horizontal scroll).{" "}
-          <strong className="text-foreground/80">Case markers</strong> use
-          worst-severity color (slate = deaths, red = confirmed, purple =
-          probable) and match the headline count.{" "}
-          <strong className="text-foreground/80">Orange</strong> markers
-          show contact-monitoring populations (offset slightly from the case
-          marker when both exist).{" "}
-          <strong className="text-foreground/80">Yellow</strong> dots mark
-          other countries / US states where Hondius passengers ended up but
-          we don&apos;t have case data yet. Amber dashed line is the cruise
-          route.{" "}
-          <strong>Note:</strong> 5 of the {h.confirmed + h.probable + h.deaths}{" "}
-          headline cases are in an unlocalized aggregate (per WHO 2026-DON600)
-          and can&apos;t be plotted — see{" "}
-          <Link
-            href="/cases/case-007-who-other-confirmed-probable"
-            className="underline hover:text-foreground"
-          >
-            case-007
-          </Link>
-          .
-        </p>
       </section>
 
       <section aria-label="All cases">
