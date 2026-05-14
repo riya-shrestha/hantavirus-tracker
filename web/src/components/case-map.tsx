@@ -4,6 +4,9 @@ import {
   useMemo,
   useState,
   useRef,
+  useCallback,
+  useContext,
+  createContext,
   type ReactNode,
 } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -97,6 +100,11 @@ function caseTypeLabel(t: CaseType, count: number): string {
   return count === 1 ? `${t} case` : `${t} cases`;
 }
 
+// Provides the map-container element to every HoverableMarker so its
+// floating tooltip can use it as the flip/shift boundary. Without this,
+// Floating UI clips against the viewport and the card escapes the map.
+const MapBoundaryContext = createContext<HTMLElement | null>(null);
+
 // ─────────────────────────────────────────────────────────────────────────
 // Liquid-glass shell
 // ─────────────────────────────────────────────────────────────────────────
@@ -147,11 +155,31 @@ function HoverableMarker({
   const arrowRef = useRef<SVGSVGElement | null>(null);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const boundary = useContext(MapBoundaryContext);
 
   // Arrow background — match the glass card's outer color (very translucent
   // so the gradient + blur on the card shows through).
   const arrowFill = isDark ? "rgba(15, 23, 42, 0.45)" : "rgba(255, 255, 255, 0.45)";
   const arrowStroke = isDark ? "rgba(255, 255, 255, 0.10)" : "rgba(0, 0, 0, 0.05)";
+
+  // Recompute middleware when the boundary element becomes available, so flip
+  // and shift can confine the card to the map container rather than the viewport.
+  const middleware = useMemo(
+    () => [
+      offset(10),
+      flip({
+        boundary: boundary ?? undefined,
+        fallbackPlacements: ["bottom", "right", "left"],
+        padding: 8,
+      }),
+      shift({
+        boundary: boundary ?? undefined,
+        padding: 12,
+      }),
+      arrow({ element: arrowRef, padding: 8 }),
+    ],
+    [boundary],
+  );
 
   const { refs, floatingStyles, context } = useFloating({
     open,
@@ -159,14 +187,7 @@ function HoverableMarker({
     whileElementsMounted: autoUpdate,
     placement: "top",
     strategy: "fixed",
-    middleware: [
-      offset(10),
-      flip({
-        fallbackPlacements: ["bottom", "right", "left"],
-      }),
-      shift({ padding: 12 }),
-      arrow({ element: arrowRef, padding: 8 }),
-    ],
+    middleware,
   });
 
   const hover = useHover(context, {
@@ -398,6 +419,12 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const [projection, setProjection] = useState<"globe" | "mercator">("globe");
+  // Ref-callback captures the map wrapper div so HoverableMarker can use it
+  // as the Floating UI boundary for flip/shift collision detection.
+  const [mapBoundary, setMapBoundary] = useState<HTMLElement | null>(null);
+  const setMapBoundaryRef = useCallback((el: HTMLDivElement | null) => {
+    setMapBoundary(el);
+  }, []);
 
   // CASE markers (confirmed / probable / suspected / death)
   const casePoints = useMemo<Point[]>(() => {
@@ -579,7 +606,11 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
     Math.max(18, Math.min(56, Math.sqrt(count) * 9));
 
   return (
-    <div className="relative w-full h-[520px] rounded-lg overflow-hidden border border-border">
+    <MapBoundaryContext.Provider value={mapBoundary}>
+    <div
+      ref={setMapBoundaryRef}
+      className="relative w-full h-[520px] rounded-lg overflow-hidden border border-border"
+    >
       <Map
         key={mapStyleKey}
         initialViewState={{ longitude: -8, latitude: 20, zoom: 1.8 }}
@@ -768,5 +799,6 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
         </div>
       </div>
     </div>
+    </MapBoundaryContext.Provider>
   );
 }
