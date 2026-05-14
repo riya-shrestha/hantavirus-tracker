@@ -80,14 +80,15 @@ export default function MethodologyPage() {
           The headline total = <code className="font-mono">confirmed + probable + death</code>,
           which currently matches{" "}
           <a
-            href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600"
+            href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601"
             className="underline hover:text-foreground"
             target="_blank"
             rel="noopener"
           >
-            WHO 2026-DON600
-          </a>
-          .
+            WHO 2026-DON601
+          </a>{" "}
+          (May 13, 2026 — 8 confirmed + 2 probable + 1 inconclusive, with 3
+          deaths as a subset). The total is 11.
         </p>
       </section>
 
@@ -169,11 +170,12 @@ export default function MethodologyPage() {
             extraction from RSS feeds and a manual review queue.
           </li>
           <li>
-            <strong>One aggregate row</strong> currently represents 5 cases
-            from WHO 2026-DON600 whose individual locations aren&apos;t
+            <strong>One aggregate row</strong> currently represents 3 cases
+            from WHO 2026-DON601 whose individual locations aren&apos;t yet
             publicly identified in the trusted-source reporting we&apos;ve
-            indexed. They will be split out as country-specific confirmations
-            land.
+            indexed. France and Spain were split out from this aggregate on
+            2026-05-13 when DON601 named them explicitly; the remaining 3
+            will follow as country-specific confirmations land.
           </li>
           <li>
             <strong>No transmission-chain graph yet.</strong> Edges between

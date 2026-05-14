@@ -97,10 +97,15 @@
     "country": "US",
     "admin1": "NE",
     "case_type": "confirmed",
-    "current_status": "confirmed",
+    "current_status": "suspected_unresolved",
     "case_count": 1,
     "date_reported": "2026-05-10",
     "source_articles": [
+      {
+        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601",
+        "source_name": "WHO DON",
+        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country (Update, 13 May 2026)"
+      },
       {
         "url": "https://www.npr.org/2026/05/10/nx-s1-5817578/hantavirus-cruise-ship-nebraska-us-passengers",
         "source_name": "NPR",
@@ -112,7 +117,7 @@
         "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
       }
     ],
-    "notes": "American former MV Hondius passenger at UNMC National Quarantine Unit biocontainment; mildly positive for Andes virus."
+    "notes": "American former MV Hondius passenger at UNMC National Quarantine Unit. Initially reported as mildly positive for Andes virus (NPR, May 10). Per WHO DON601 (May 13), lab results are now inconclusive: one positive and one negative result from two different laboratories; patient is asymptomatic and being retested. Classification downgraded from confirmed to inconclusive pending re-test."
   },
   {
     "id": "case-006-gbr-ot-tristan-probable",
@@ -139,13 +144,13 @@
     "admin1": null,
     "case_type": "confirmed",
     "current_status": "confirmed",
-    "case_count": 5,
-    "date_reported": "2026-05-12",
+    "case_count": 3,
+    "date_reported": "2026-05-13",
     "source_articles": [
       {
-        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600",
+        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601",
         "source_name": "WHO DON",
-        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country"
+        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country (Update, 13 May 2026)"
       },
       {
         "url": "https://www.ecdc.europa.eu/en/infectious-disease-topics/hantavirus-infection/surveillance-and-updates/andes-hantavirus-outbreak",
@@ -153,7 +158,7 @@
         "title": "Andes hantavirus outbreak in cruise ship, 12 May 2026"
       }
     ],
-    "notes": "AGGREGATE — 5 additional confirmed/probable cases per WHO 2026-DON600 (total 11 cases globally as of May 12). Patients hospitalized across South Africa, Netherlands, Germany, Saint Helena, Spain, France, Switzerland. Individual cases not yet publicly identified in our trusted-source reporting; will be split out as country-specific confirmations land."
+    "notes": "AGGREGATE — 3 additional confirmed cases per WHO 2026-DON601 (May 13, 2026; total 11 cases globally: 8 confirmed + 2 probable + 1 inconclusive, including 3 deaths). 2 cases previously in this aggregate have now been split out as France and Spain. Remaining 3 individual cases not yet publicly identified in trusted-source reporting; will be split out as country-specific confirmations land."
   },
   {
     "id": "case-008-usa-ne-unmc-monitoring",
@@ -231,5 +236,41 @@
       }
     ],
     "notes": "British dual-national former MV Hondius passenger under contact monitoring at UNMC (US/NE)."
+  },
+  {
+    "id": "case-012-fra-repatriation-confirmed",
+    "schema_version": 0,
+    "country": "FR",
+    "admin1": null,
+    "case_type": "confirmed",
+    "current_status": "confirmed",
+    "case_count": 1,
+    "date_reported": "2026-05-13",
+    "source_articles": [
+      {
+        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601",
+        "source_name": "WHO DON",
+        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country (Update, 13 May 2026)"
+      }
+    ],
+    "notes": "French former MV Hondius passenger; became symptomatic during repatriation. Confirmed Andes virus per WHO DON601 (May 13, 2026)."
+  },
+  {
+    "id": "case-013-esp-tenerife-confirmed",
+    "schema_version": 0,
+    "country": "ES",
+    "admin1": null,
+    "case_type": "confirmed",
+    "current_status": "confirmed",
+    "case_count": 1,
+    "date_reported": "2026-05-13",
+    "source_articles": [
+      {
+        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601",
+        "source_name": "WHO DON",
+        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country (Update, 13 May 2026)"
+      }
+    ],
+    "notes": "Spanish former MV Hondius passenger; tested upon arrival in Tenerife following repatriation; currently asymptomatic. Confirmed Andes virus per WHO DON601 (May 13, 2026)."
   }
 ]

@@ -22,7 +22,7 @@ hantavirus-tracker/
 
 | Component | State |
 |---|---|
-| `data/cases.json` | **Live.** 11 cases (7 confirmed + 1 probable + 3 deaths + 20 under monitoring) matching WHO 2026-DON600 |
+| `data/cases.json` | **Live.** 11 cases (7 confirmed + 1 probable + 3 deaths + 20 under monitoring) per WHO 2026-DON601 (May 13). 1 US case is now classified inconclusive by WHO; we retain `case_type=confirmed` (frozen) but `current_status` reflects the downgrade. |
 | `streamlit-v0/` | **Live.** Original Streamlit MVP. Runs locally; deployed to Streamlit Community Cloud |
 | `web/` | **Under construction.** v1 frontend (Next.js 15 + Tailwind + shadcn/ui + react-globe.gl) |
 | `pipeline/` | **Not started.** Will hold automated ingestion + LLM extraction |
@@ -30,7 +30,7 @@ hantavirus-tracker/
 ## Data sources (tiered)
 
 **Tier 1 — official health agencies** (basis of headline counts):
-- WHO Disease Outbreak News — [DON600 (Hondius cluster)](https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600)
+- WHO Disease Outbreak News — [DON601 (Hondius cluster, latest)](https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601) · [DON600 (8 May)](https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600)
 - CDC HAN — [HAN00528 (US monitoring)](https://www.cdc.gov/han/php/notices/han00528.html)
 - ECDC — [Andes hantavirus outbreak, 12 May 2026](https://www.ecdc.europa.eu/en/infectious-disease-topics/hantavirus-infection/surveillance-and-updates/andes-hantavirus-outbreak)
 - National health agencies of affected countries (RIVM, RKI, BAG, NICD, UKHSA, US state health depts)
@@ -50,7 +50,7 @@ Reuters, AP, NPR, CNN, BBC, NYT, FT, Washington Post, regional equivalents.
 | `contact_monitoring` | Asymptomatic, exposed, under public-health watch — **not counted in headline** |
 | `death` | Deceased (confirmed or probable) |
 
-Headline total (currently 11) = `confirmed + probable + death`, matching WHO 2026-DON600.
+Headline total (currently 11) = `confirmed + probable + death`, matching WHO 2026-DON601 (8 confirmed + 2 probable + 1 inconclusive, 3 deaths as a subset).
 
 ## Inclusion criteria
 

@@ -8,7 +8,7 @@ export function Footer() {
           MV Hondius / Andes virus 2026 outbreak tracker. Hand-curated from CDC HAN, WHO DON, ECDC, and major news outlets.
         </p>
         <p>
-          Headline counts match WHO 2026-DON600. See{" "}
+          Headline counts match WHO 2026-DON601 (May 13). See{" "}
           <Link href="/methodology" className="underline hover:text-foreground">
             methodology
           </Link>{" "}

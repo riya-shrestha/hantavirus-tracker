@@ -25,7 +25,7 @@ export default function Home() {
           Tracking the human-to-human Andes virus cluster from the April 2026
           MV Hondius cruise ship outbreak. Cases below are hand-curated from
           tier-1 health agencies (WHO, CDC, ECDC) and major news outlets;
-          counts match WHO 2026-DON600.
+          counts match WHO 2026-DON601 (May 13, 2026).
         </p>
       </header>
 
@@ -63,12 +63,12 @@ export default function Home() {
         <span className="font-medium text-foreground">{headlineTotal}</span>{" "}
         total cases per{" "}
         <a
-          href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600"
+          href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601"
           className="underline hover:text-foreground"
           target="_blank"
           rel="noopener"
         >
-          WHO 2026-DON600
+          WHO 2026-DON601
         </a>
         . Contact-monitoring population is tracked separately because asymptomatic
         contacts are not part of the official case tally.
