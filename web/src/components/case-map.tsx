@@ -323,16 +323,19 @@ function CasePanel({ point }: { point: Point }) {
             ))}
           </div>
         ) : (
-          // Compact: up to 2 truncated notes
-          <ul className="space-y-1">
+          // Compact: up to 2 truncated notes (no bullet — line-clamp turned
+          // the previous inline middot into an orphaned dot on its own line).
+          <ul className="space-y-1.5">
             {point.cases.slice(0, 2).map((c) => (
-              <li key={c.id} className="text-sm leading-snug text-foreground/85">
-                <span className="text-muted-foreground">·</span>{" "}
-                <span className="line-clamp-2">{c.notes}</span>
+              <li
+                key={c.id}
+                className="text-sm leading-snug text-foreground/85 line-clamp-2"
+              >
+                {c.notes}
               </li>
             ))}
             {point.cases.length > 2 && (
-              <li className="text-xs text-muted-foreground italic pl-3">
+              <li className="text-xs text-muted-foreground italic">
                 + {point.cases.length - 2} more case row
                 {point.cases.length - 2 === 1 ? "" : "s"}
               </li>
