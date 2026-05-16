@@ -653,8 +653,13 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
     layout: { "line-cap": "round", "line-join": "round" },
   };
 
+  // Marker diameter in px. Tightened range so high-count aggregates (e.g.,
+  // the US-centroid 21-contact aggregate, or the 16 at Omaha) don't bury
+  // the state/city geography underneath. Range is 18px (count=1) to 28px
+  // (count>=25); the count NUMBER inside the marker continues to
+  // communicate scale even though circle areas are similar.
   const markerSize = (count: number) =>
-    Math.max(18, Math.min(56, Math.sqrt(count) * 9));
+    Math.max(18, Math.min(28, 16 + Math.sqrt(count) * 2.4));
 
   return (
     <MapBoundaryContext.Provider value={mapBoundary}>
@@ -744,7 +749,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
                     background: MONITORING_COLOR,
                     borderRadius: "9999px",
                     border: "2px solid white",
-                    fontSize: size > 28 ? 14 : 11,
+                    fontSize: size > 24 ? 12 : 11,
                     lineHeight: 1,
                   }}
                   aria-label={`${p.name}: ${p.count} under monitoring`}
@@ -776,7 +781,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
                     background: p.color,
                     borderRadius: "9999px",
                     border: "2px solid white",
-                    fontSize: size > 28 ? 14 : 11,
+                    fontSize: size > 24 ? 12 : 11,
                     lineHeight: 1,
                   }}
                   aria-label={`${p.name}: ${p.count} cases`}
