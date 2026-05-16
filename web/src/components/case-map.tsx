@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
-import Map, {
+import MaplibreMap, {
   Marker,
   Source,
   Layer,
@@ -37,8 +37,9 @@ import {
   FloatingArrow,
 } from "@floating-ui/react";
 import type { Case, CaseType } from "@/lib/types";
-import { countryCoords } from "@/data/country-coords";
+import { countryCoords, countryName } from "@/data/country-coords";
 import { usStateCoords } from "@/data/us-state-coords";
+import { cityCoords } from "@/data/city-coords";
 import { cruiseRoute } from "@/data/cruise-route";
 import {
   passengerDestinations,
@@ -94,6 +95,81 @@ function caseTypeLabel(t: CaseType, count: number): string {
       ? "individual under monitoring"
       : "individuals under monitoring";
   return count === 1 ? `${t} case` : `${t} cases`;
+}
+
+interface ResolvedLocation {
+  lat: number;
+  lng: number;
+  displayName: string;
+  key: string; // aggregation key — cases with the same key collapse into one marker
+  countryCode: string; // location country (may differ from attribution country)
+}
+
+/**
+ * Resolve a case's PHYSICAL location for map plotting. Prefers the case's
+ * own location_lat/location_lng; falls back to admin1 (US state) centroid;
+ * finally to country centroid. Returns null if the case can't be plotted
+ * (e.g., country=XX or location_specificity=unknown).
+ */
+function resolveLocation(c: Case): ResolvedLocation | null {
+  // location_country defaults to attribution country if not set
+  const locCountry = c.location_country ?? c.country;
+  const locAdmin1 =
+    c.location_admin1 ?? (c.country === "US" ? c.admin1 : null);
+  const locCity = c.location_city ?? null;
+
+  if (locCountry === "XX") return null;
+  if (c.location_specificity === "unknown") return null;
+
+  // 1) Use the case's own coords when available (city-level usually)
+  if (c.location_lat != null && c.location_lng != null) {
+    const cn = countryName(locCountry);
+    let displayName: string;
+    if (locCity && cityCoords[locCity]) {
+      const ci = cityCoords[locCity];
+      displayName = locAdmin1
+        ? `${ci.display_name}, ${locAdmin1}, ${cn}`
+        : `${ci.display_name}, ${cn}`;
+    } else if (locAdmin1 && locCountry === "US" && usStateCoords[locAdmin1]) {
+      displayName = `${usStateCoords[locAdmin1].name}, USA`;
+    } else {
+      displayName = cn;
+    }
+    return {
+      lat: c.location_lat,
+      lng: c.location_lng,
+      displayName,
+      key: `${locCountry}|${locAdmin1 ?? ""}|${locCity ?? ""}`,
+      countryCode: locCountry,
+    };
+  }
+
+  // 2) admin1 (US state) centroid fallback
+  if (locAdmin1 && locCountry === "US" && usStateCoords[locAdmin1]) {
+    const s = usStateCoords[locAdmin1];
+    return {
+      lat: s.lat,
+      lng: s.lng,
+      displayName: `${s.name}, USA`,
+      key: `${locCountry}|${locAdmin1}|`,
+      countryCode: locCountry,
+    };
+  }
+
+  // 3) Country centroid fallback (also handles at_sea cases — they
+  //    fall back to attribution country until we wire cruise_positions)
+  if (countryCoords[locCountry]) {
+    const ci = countryCoords[locCountry];
+    return {
+      lat: ci.lat,
+      lng: ci.lng,
+      displayName: ci.name,
+      key: `${locCountry}||`,
+      countryCode: locCountry,
+    };
+  }
+
+  return null;
 }
 
 // Provides the map-container element to every HoverableMarker so its
@@ -416,16 +492,30 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
     setMapBoundary(el);
   }, []);
 
-  // CASE markers (confirmed / probable / suspected / death)
+  // Helper: highest-severity case_type in a set for color/label selection
+  const pickPrimary = (types: Set<CaseType>): CaseType =>
+    types.has("death")
+      ? "death"
+      : types.has("confirmed")
+        ? "confirmed"
+        : types.has("probable")
+          ? "probable"
+          : "suspected";
+
+  // CASE markers (confirmed / probable / suspected / death) aggregated by
+  // PHYSICAL location (not attribution country). Two cases at the same
+  // city/state collapse into one marker; hover card shows the breakdown.
   const casePoints = useMemo<Point[]>(() => {
-    const usByState: Record<
-      string,
-      { count: number; types: Set<CaseType>; cases: Case[] }
-    > = {};
-    const byCountry: Record<
-      string,
-      { count: number; types: Set<CaseType>; cases: Case[] }
-    > = {};
+    interface CaseLocationAccum {
+      lat: number;
+      lng: number;
+      name: string;
+      countryCode: string;
+      count: number;
+      types: Set<CaseType>;
+      cases: Case[];
+    }
+    const byLocation = new Map<string, CaseLocationAccum>();
 
     for (const c of cases) {
       if (c.country === "XX") continue;
@@ -434,140 +524,107 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
       // tested negative). They stay in the dataset for audit but aren't
       // plotted as active cases.
       if (c.current_status === "excluded") continue;
-      if (c.country === "US" && c.admin1 && usStateCoords[c.admin1]) {
-        const e = (usByState[c.admin1] ??= {
-          count: 0,
-          types: new Set(),
-          cases: [],
+
+      const loc = resolveLocation(c);
+      if (!loc) continue;
+
+      const existing = byLocation.get(loc.key);
+      if (existing) {
+        existing.count += c.case_count;
+        existing.types.add(c.case_type);
+        existing.cases.push(c);
+      } else {
+        byLocation.set(loc.key, {
+          lat: loc.lat,
+          lng: loc.lng,
+          name: loc.displayName,
+          countryCode: loc.countryCode,
+          count: c.case_count,
+          types: new Set([c.case_type]),
+          cases: [c],
         });
-        e.count += c.case_count;
-        e.types.add(c.case_type);
-        e.cases.push(c);
-      } else if (countryCoords[c.country]) {
-        const e = (byCountry[c.country] ??= {
-          count: 0,
-          types: new Set(),
-          cases: [],
-        });
-        e.count += c.case_count;
-        e.types.add(c.case_type);
-        e.cases.push(c);
       }
     }
 
-    const out: Point[] = [];
-    const pickPrimary = (types: Set<CaseType>): CaseType =>
-      types.has("death")
-        ? "death"
-        : types.has("confirmed")
-          ? "confirmed"
-          : types.has("probable")
-            ? "probable"
-            : "suspected";
-
-    for (const [stateCode, info] of Object.entries(usByState)) {
-      const s = usStateCoords[stateCode];
-      out.push({
-        code: `case-${stateCode}`,
-        countryCode: "US",
-        lat: s.lat,
-        lng: s.lng,
-        name: `${s.name}, USA`,
-        count: info.count,
-        color: pickSeverity(info.types),
-        cases: info.cases,
-        primaryType: pickPrimary(info.types),
-      });
-    }
-    for (const [code, info] of Object.entries(byCountry)) {
-      const ci = countryCoords[code];
-      out.push({
-        code: `case-${code}`,
-        countryCode: code,
-        lat: ci.lat,
-        lng: ci.lng,
-        name: ci.name,
-        count: info.count,
-        color: pickSeverity(info.types),
-        cases: info.cases,
-        primaryType: pickPrimary(info.types),
-      });
-    }
-    return out;
+    return Array.from(byLocation.entries()).map(([key, info]) => ({
+      code: `case-${key}`,
+      countryCode: info.countryCode,
+      lat: info.lat,
+      lng: info.lng,
+      name: info.name,
+      count: info.count,
+      color: pickSeverity(info.types),
+      cases: info.cases,
+      primaryType: pickPrimary(info.types),
+    }));
   }, [cases]);
 
-  // MONITORING markers
+  // MONITORING markers — same location-key aggregation, contact_monitoring only
   const monitoringPoints = useMemo<Point[]>(() => {
-    const usByState: Record<string, { count: number; cases: Case[] }> = {};
-    const byCountry: Record<string, { count: number; cases: Case[] }> = {};
+    interface MonLocationAccum {
+      lat: number;
+      lng: number;
+      name: string;
+      countryCode: string;
+      count: number;
+      cases: Case[];
+    }
+    const byLocation = new Map<string, MonLocationAccum>();
 
     for (const c of cases) {
       if (c.country === "XX") continue;
       if (c.case_type !== "contact_monitoring") continue;
-      if (c.country === "US" && c.admin1 && usStateCoords[c.admin1]) {
-        const e = (usByState[c.admin1] ??= { count: 0, cases: [] });
-        e.count += c.case_count;
-        e.cases.push(c);
-      } else if (countryCoords[c.country]) {
-        const e = (byCountry[c.country] ??= { count: 0, cases: [] });
-        e.count += c.case_count;
-        e.cases.push(c);
+
+      const loc = resolveLocation(c);
+      if (!loc) continue;
+
+      const existing = byLocation.get(loc.key);
+      if (existing) {
+        existing.count += c.case_count;
+        existing.cases.push(c);
+      } else {
+        byLocation.set(loc.key, {
+          lat: loc.lat,
+          lng: loc.lng,
+          name: loc.displayName,
+          countryCode: loc.countryCode,
+          count: c.case_count,
+          cases: [c],
+        });
       }
     }
 
-    const out: Point[] = [];
-    for (const [stateCode, info] of Object.entries(usByState)) {
-      const s = usStateCoords[stateCode];
-      out.push({
-        code: `mon-${stateCode}`,
-        countryCode: "US",
-        lat: s.lat,
-        lng: s.lng,
-        name: `${s.name}, USA`,
-        count: info.count,
-        color: MONITORING_COLOR,
-        cases: info.cases,
-        primaryType: "contact_monitoring",
-      });
-    }
-    for (const [code, info] of Object.entries(byCountry)) {
-      const ci = countryCoords[code];
-      out.push({
-        code: `mon-${code}`,
-        countryCode: code,
-        lat: ci.lat,
-        lng: ci.lng,
-        name: ci.name,
-        count: info.count,
-        color: MONITORING_COLOR,
-        cases: info.cases,
-        primaryType: "contact_monitoring",
-      });
-    }
-    return out;
+    return Array.from(byLocation.entries()).map(([key, info]) => ({
+      code: `mon-${key}`,
+      countryCode: info.countryCode,
+      lat: info.lat,
+      lng: info.lng,
+      name: info.name,
+      count: info.count,
+      color: MONITORING_COLOR,
+      cases: info.cases,
+      primaryType: "contact_monitoring" as CaseType,
+    }));
   }, [cases]);
 
-  // Set of regions already covered by case/monitoring markers, so passenger
-  // dots don't duplicate.
-  const occupied = useMemo(() => {
-    const set = new Set<string>();
-    for (const c of cases) {
-      if (c.country === "XX") continue;
-      const k =
-        c.country === "US" && c.admin1
-          ? `US|${c.admin1}`
-          : `${c.country}|`;
-      set.add(k);
-    }
-    return set;
-  }, [cases]);
-
+  // Passenger destination yellow dots — filter out countries/states that
+  // already have a case or monitoring marker (location-based, not attribution).
   const passengerPoints = useMemo<PassengerDestination[]>(() => {
     return passengerDestinations.filter((d) => {
-      const k = d.admin1 ? `${d.country}|${d.admin1}` : `${d.country}|`;
-      return !occupied.has(k);
+      const hasCaseHere = cases.some((c) => {
+        if (c.current_status === "excluded") return false;
+        if (c.country === "XX") return false;
+        const cCountry = c.location_country ?? c.country;
+        if (cCountry !== d.country) return false;
+        if (d.admin1) {
+          const cAdmin1 = c.location_admin1 ?? c.admin1;
+          return cAdmin1 === d.admin1;
+        }
+        return true; // country-level passenger dot — any case in that country covers it
+      });
+      return !hasCaseHere;
     });
-  }, [occupied]);
+  }, [cases]);
 
   const cruiseRouteGeoJSON = useMemo<GeoJSON.Feature>(
     () => ({
@@ -605,7 +662,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
       ref={setMapBoundaryRef}
       className="relative w-full h-[520px] rounded-lg overflow-hidden border border-border"
     >
-      <Map
+      <MaplibreMap
         key={mapStyleKey}
         initialViewState={{ longitude: -8, latitude: 20, zoom: 1.8 }}
         style={{ width: "100%", height: "100%" }}
@@ -731,7 +788,7 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
             />
           );
         })}
-      </Map>
+      </MaplibreMap>
 
       {/* Projection toggle */}
       <div className="absolute top-3 left-3 z-10">
