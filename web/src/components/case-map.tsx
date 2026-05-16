@@ -430,6 +430,10 @@ export function CaseMap({ cases, onCountryClick }: CaseMapProps) {
     for (const c of cases) {
       if (c.country === "XX") continue;
       if (c.case_type === "contact_monitoring") continue;
+      // Skip cases that have been operationally excluded (e.g., later
+      // tested negative). They stay in the dataset for audit but aren't
+      // plotted as active cases.
+      if (c.current_status === "excluded") continue;
       if (c.country === "US" && c.admin1 && usStateCoords[c.admin1]) {
         const e = (usByState[c.admin1] ??= {
           count: 0,

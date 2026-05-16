@@ -6,6 +6,7 @@
     "admin1": null,
     "case_type": "death",
     "current_status": "deceased",
+    "death_classification": "probable",
     "case_count": 1,
     "date_reported": "2026-04-11",
     "source_articles": [
@@ -15,12 +16,17 @@
         "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
       },
       {
-        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600",
+        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601",
         "source_name": "WHO DON",
-        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country"
+        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country (Update, 13 May 2026)"
+      },
+      {
+        "url": "https://www.cbsnews.com/news/hantavirus-cases-deadly-cruise-ship-outbreak/",
+        "source_name": "CBS News",
+        "title": "What we know about hantavirus cases tied to deadly cruise ship outbreak"
       }
     ],
-    "notes": "70-year-old Dutch man, first identified case in the outbreak; fell ill on board MV Hondius with fever, headache, abdominal pain, diarrhea; died on board April 11, 2026. Body taken ashore at Saint Helena April 24."
+    "notes": "70-year-old Dutch man, first identified case in the outbreak; fell ill on board MV Hondius with fever, headache, abdominal pain, diarrhea; died on board April 11, 2026. Body taken ashore at Saint Helena April 24. No samples were taken from him at the time (hantavirus was not yet suspected), which is why WHO classifies his death as PROBABLE rather than confirmed."
   },
   {
     "id": "case-002-nld-wife-johannesburg-death",
@@ -29,6 +35,7 @@
     "admin1": null,
     "case_type": "death",
     "current_status": "deceased",
+    "death_classification": "confirmed",
     "case_count": 1,
     "date_reported": "2026-04-26",
     "source_articles": [
@@ -38,35 +45,41 @@
         "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
       },
       {
-        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600",
+        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601",
         "source_name": "WHO DON",
-        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country"
+        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country (Update, 13 May 2026)"
       }
     ],
-    "notes": "Dutch wife of case-001. Disembarked at Saint Helena April 24; died in hospital in Johannesburg, South Africa, April 26."
+    "notes": "Dutch wife of case-001. Disembarked at Saint Helena April 24; died in hospital in Johannesburg, South Africa, April 26. Lab-tested before death; classified as confirmed Andes virus death by WHO."
   },
   {
-    "id": "case-003-deu-national-death",
+    "id": "case-003-deu-onboard-death",
     "schema_version": 0,
     "country": "DE",
     "admin1": null,
     "case_type": "death",
     "current_status": "deceased",
+    "death_classification": "confirmed",
     "case_count": 1,
-    "date_reported": "2026-05-08",
+    "date_reported": "2026-05-02",
     "source_articles": [
+      {
+        "url": "https://www.who.int/news/item/15-05-2026-german-passenger-hantavirus",
+        "source_name": "WHO",
+        "title": "WHO statement on German passenger Andes virus confirmation (15 May 2026)"
+      },
+      {
+        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601",
+        "source_name": "WHO DON",
+        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country (Update, 13 May 2026)"
+      },
       {
         "url": "https://www.cdc.gov/han/php/notices/han00528.html",
         "source_name": "CDC HAN",
         "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
-      },
-      {
-        "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600",
-        "source_name": "WHO DON",
-        "title": "Hantavirus cluster linked to cruise ship travel - Multi-country"
       }
     ],
-    "notes": "German national, former MV Hondius passenger; died of confirmed Andes virus. Third death in the cluster."
+    "notes": "German woman, MV Hondius passenger; fever onset April 28, progressed to pneumonia. Died on board May 2, 2026. Samples collected prior to death tested positive for hantavirus (per WHO statement, May 15). One of two confirmed deaths in the cluster."
   },
   {
     "id": "case-004-che-zurich-confirmed",
@@ -97,10 +110,20 @@
     "country": "US",
     "admin1": "NE",
     "case_type": "confirmed",
-    "current_status": "suspected_unresolved",
+    "current_status": "excluded",
     "case_count": 1,
     "date_reported": "2026-05-10",
     "source_articles": [
+      {
+        "url": "https://www.pbs.org/newshour/health/american-cruise-ship-passenger-tests-positive-for-hantavirus-after-evacuation",
+        "source_name": "PBS News",
+        "title": "American cruise ship passenger tests positive for hantavirus after evacuation (initial report; later cleared)"
+      },
+      {
+        "url": "https://www.cbsnews.com/news/hantavirus-cases-deadly-cruise-ship-outbreak/",
+        "source_name": "CBS News",
+        "title": "What we know about hantavirus cases tied to deadly cruise ship outbreak"
+      },
       {
         "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601",
         "source_name": "WHO DON",
@@ -117,7 +140,7 @@
         "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
       }
     ],
-    "notes": "American former MV Hondius passenger at UNMC National Quarantine Unit. Initially reported as mildly positive for Andes virus (NPR, May 10). Per WHO DON601 (May 13), lab results are now inconclusive: one positive and one negative result from two different laboratories; patient is asymptomatic and being retested. Classification downgraded from confirmed to inconclusive pending re-test."
+    "notes": "American MV Hondius passenger admitted to UNMC's biocontainment unit, Nebraska — identified as Dr. Stephen Kornfeld. Initially reported as mildly PCR-positive on board the ship (NPR, May 10). Follow-up testing in the US was negative; per WHO DON601 (May 13), results were declared inconclusive. Per PBS / CBS News (May 13–15), Dr. Kornfeld tested negative on the second lab run and was cleared from biocontainment, moved to the general quarantine unit. WHO has REMOVED him from the official case tally; CDC confirms no current confirmed US cases. Retained in our tracker with case_type=confirmed (frozen at original classification per methodology) but current_status='excluded' reflects the medical clearance."
   },
   {
     "id": "case-006-gbr-ot-tristan-probable",
@@ -272,5 +295,28 @@
       }
     ],
     "notes": "Spanish former MV Hondius passenger; tested upon arrival in Tenerife following repatriation; currently asymptomatic. Confirmed Andes virus per WHO DON601 (May 13, 2026)."
+  },
+  {
+    "id": "case-014-usa-other-monitoring-aggregate",
+    "schema_version": 0,
+    "country": "US",
+    "admin1": null,
+    "case_type": "contact_monitoring",
+    "current_status": "suspected_unresolved",
+    "case_count": 21,
+    "date_reported": "2026-05-14",
+    "source_articles": [
+      {
+        "url": "https://abcnews.com/International/live-updates/hantavirus-live-updates-mv-hondius-canary-islands/?id=132746955",
+        "source_name": "ABC News",
+        "title": "Hantavirus live updates: Atlanta passengers relocate to Nebraska quarantine facility"
+      },
+      {
+        "url": "https://www.cdc.gov/han/php/notices/han00528.html",
+        "source_name": "CDC HAN",
+        "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
+      }
+    ],
+    "notes": "AGGREGATE — 21 additional contacts under public-health monitoring across 13 US states whose specific locations have not been publicly identified. Per CDC (May 14, 2026), 41 people across 16 US states are being monitored following potential Andes virus exposure from the MV Hondius cruise. Our named-location case rows (NE × 16, GA × 2, NJ × 2, UK dual-national × 1 at UNMC) account for 20 of those; this aggregate row covers the remaining 21 distributed across 13 unnamed states. Will be split out as specific-state reporting becomes available."
   }
 ]

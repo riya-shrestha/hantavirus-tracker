@@ -39,8 +39,13 @@ export interface HeadlineCounts {
 }
 
 export function computeHeadline(cases: Case[]): HeadlineCounts {
+  // Cases with current_status='excluded' are operationally cleared (e.g., a
+  // previously-positive lab result superseded by a negative re-test).
+  // They retain their original case_type for audit / methodology purposes
+  // but are not counted toward the active headline numbers.
+  const activeCases = cases.filter((c) => c.current_status !== "excluded");
   const sum = (type: CaseType) =>
-    cases
+    activeCases
       .filter((c) => c.case_type === type)
       .reduce((s, c) => s + c.case_count, 0);
   return {

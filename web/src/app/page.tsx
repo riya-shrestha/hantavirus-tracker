@@ -61,7 +61,7 @@ export default function Home() {
 
       <p className="text-sm text-muted-foreground">
         <span className="font-medium text-foreground">{headlineTotal}</span>{" "}
-        total cases per{" "}
+        active cases per{" "}
         <a
           href="https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601"
           className="underline hover:text-foreground"
@@ -69,8 +69,20 @@ export default function Home() {
           rel="noopener"
         >
           WHO 2026-DON601
+        </a>{" "}
+        and{" "}
+        <a
+          href="https://www.ecdc.europa.eu/en/infectious-disease-topics/hantavirus-infection/surveillance-and-updates/andes-hantavirus-outbreak"
+          className="underline hover:text-foreground"
+          target="_blank"
+          rel="noopener"
+        >
+          ECDC May 16
         </a>
-        . Contact-monitoring population is tracked separately because asymptomatic
+        . One previously-included US case has been cleared by negative re-test
+        (see case-005). Contact-monitoring population (
+        <span className="font-medium">{h.monitoring}</span> across the US and
+        partner countries per CDC) tracked separately because asymptomatic
         contacts are not part of the official case tally.
       </p>
 

@@ -1,6 +1,9 @@
 // Places Hondius passengers ended up after the cruise — drawn from CDC HAN
-// HAN00528 (US states monitoring returning passengers), WHO 2026-DON600
-// (countries where passengers were hospitalized), and ECDC updates.
+// HAN00528 (US states monitoring returning passengers), WHO DON600/DON601
+// (countries where passengers were hospitalized), and ECDC May 16 update
+// (final list of 12 countries hosting former passengers: Australia, Canada,
+// France, Germany, the Netherlands, Saint Helena, Singapore, South Africa,
+// Spain, Switzerland, Turkey, United States).
 // Yellow markers on the map show these locations where there's no case or
 // monitoring marker already.
 
@@ -98,5 +101,33 @@ export const passengerDestinations: PassengerDestination[] = [
     lng: 103.8,
     label: "Singapore",
     note: "Country with passengers on the original Hondius cruise",
+  },
+  {
+    country: "AU",
+    lat: -25.0,
+    lng: 133.0,
+    label: "Australia",
+    note: "Hondius passenger(s) hospitalized or quarantined in Australia per ECDC (May 16)",
+  },
+  {
+    country: "CA",
+    lat: 56.0,
+    lng: -106.0,
+    label: "Canada",
+    note: "Hondius passenger(s) hospitalized or quarantined in Canada per ECDC (May 16)",
+  },
+  {
+    country: "TR",
+    lat: 39.0,
+    lng: 35.0,
+    label: "Turkey",
+    note: "Hondius passenger(s) hospitalized or quarantined in Turkey per ECDC (May 16)",
+  },
+  {
+    country: "SH",
+    lat: -15.96,
+    lng: -5.7,
+    label: "Saint Helena",
+    note: "MV Hondius port call (Apr 24) where the Dutch couple disembarked; passengers also remained in care here per ECDC",
   },
 ];

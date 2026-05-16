@@ -18,6 +18,10 @@ export const countryCoords: Record<string, CountryInfo> = {
   CV: { name: "Cape Verde", iso3: "CPV", lat: 16.0, lng: -23.5 },
   ES: { name: "Spain", iso3: "ESP", lat: 40.4, lng: -3.7 },
   FR: { name: "France", iso3: "FRA", lat: 46.2, lng: 2.2 },
+  AU: { name: "Australia", iso3: "AUS", lat: -25.0, lng: 133.0 },
+  CA: { name: "Canada", iso3: "CAN", lat: 56.0, lng: -106.0 },
+  TR: { name: "Turkey", iso3: "TUR", lat: 39.0, lng: 35.0 },
+  SH: { name: "Saint Helena", iso3: "SHN", lat: -15.96, lng: -5.7 },
 };
 
 export function countryName(code: string): string {
