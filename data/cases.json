@@ -9,6 +9,12 @@
     "death_classification": "probable",
     "case_count": 1,
     "date_reported": "2026-04-11",
+    "location_specificity": "at_sea",
+    "location_country": null,
+    "location_admin1": null,
+    "location_city": null,
+    "location_lat": null,
+    "location_lng": null,
     "source_articles": [
       {
         "url": "https://www.cdc.gov/han/php/notices/han00528.html",
@@ -38,6 +44,12 @@
     "death_classification": "confirmed",
     "case_count": 1,
     "date_reported": "2026-04-26",
+    "location_specificity": "city",
+    "location_country": "ZA",
+    "location_admin1": null,
+    "location_city": "johannesburg",
+    "location_lat": -26.2041,
+    "location_lng": 28.0473,
     "source_articles": [
       {
         "url": "https://www.cdc.gov/han/php/notices/han00528.html",
@@ -62,6 +74,12 @@
     "death_classification": "confirmed",
     "case_count": 1,
     "date_reported": "2026-05-02",
+    "location_specificity": "at_sea",
+    "location_country": null,
+    "location_admin1": null,
+    "location_city": null,
+    "location_lat": null,
+    "location_lng": null,
     "source_articles": [
       {
         "url": "https://www.who.int/news/item/15-05-2026-german-passenger-hantavirus",
@@ -90,6 +108,12 @@
     "current_status": "confirmed",
     "case_count": 1,
     "date_reported": "2026-05-06",
+    "location_specificity": "city",
+    "location_country": "CH",
+    "location_admin1": null,
+    "location_city": "zurich",
+    "location_lat": 47.3769,
+    "location_lng": 8.5417,
     "source_articles": [
       {
         "url": "https://www.cdc.gov/han/php/notices/han00528.html",
@@ -113,6 +137,12 @@
     "current_status": "excluded",
     "case_count": 1,
     "date_reported": "2026-05-10",
+    "location_specificity": "city",
+    "location_country": "US",
+    "location_admin1": "NE",
+    "location_city": "omaha",
+    "location_lat": 41.2565,
+    "location_lng": -95.9345,
     "source_articles": [
       {
         "url": "https://www.pbs.org/newshour/health/american-cruise-ship-passenger-tests-positive-for-hantavirus-after-evacuation",
@@ -140,7 +170,7 @@
         "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
       }
     ],
-    "notes": "American MV Hondius passenger admitted to UNMC's biocontainment unit, Nebraska — identified as Dr. Stephen Kornfeld. Initially reported as mildly PCR-positive on board the ship (NPR, May 10). Follow-up testing in the US was negative; per WHO DON601 (May 13), results were declared inconclusive. Per PBS / CBS News (May 13–15), Dr. Kornfeld tested negative on the second lab run and was cleared from biocontainment, moved to the general quarantine unit. WHO has REMOVED him from the official case tally; CDC confirms no current confirmed US cases. Retained in our tracker with case_type=confirmed (frozen at original classification per methodology) but current_status='excluded' reflects the medical clearance."
+    "notes": "American MV Hondius passenger admitted to UNMC's biocontainment unit, Nebraska \u2014 identified as Dr. Stephen Kornfeld. Initially reported as mildly PCR-positive on board the ship (NPR, May 10). Follow-up testing in the US was negative; per WHO DON601 (May 13), results were declared inconclusive. Per PBS / CBS News (May 13\u201315), Dr. Kornfeld tested negative on the second lab run and was cleared from biocontainment, moved to the general quarantine unit. WHO has REMOVED him from the official case tally; CDC confirms no current confirmed US cases. Retained in our tracker with case_type=confirmed (frozen at original classification per methodology) but current_status='excluded' reflects the medical clearance."
   },
   {
     "id": "case-006-gbr-ot-tristan-probable",
@@ -151,6 +181,12 @@
     "current_status": "suspected_unresolved",
     "case_count": 1,
     "date_reported": "2026-04-28",
+    "location_specificity": "city",
+    "location_country": "SH",
+    "location_admin1": null,
+    "location_city": "tristan-da-cunha",
+    "location_lat": -37.0686,
+    "location_lng": -12.311,
     "source_articles": [
       {
         "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600",
@@ -181,7 +217,13 @@
         "title": "Andes hantavirus outbreak in cruise ship, 12 May 2026"
       }
     ],
-    "notes": "AGGREGATE — 3 additional confirmed cases per WHO 2026-DON601 (May 13, 2026; total 11 cases globally: 8 confirmed + 2 probable + 1 inconclusive, including 3 deaths). 2 cases previously in this aggregate have now been split out as France and Spain. Remaining 3 individual cases not yet publicly identified in trusted-source reporting; will be split out as country-specific confirmations land."
+    "notes": "AGGREGATE \u2014 3 additional confirmed cases per WHO 2026-DON601 (May 13, 2026; total 11 cases globally: 8 confirmed + 2 probable + 1 inconclusive, including 3 deaths). 2 cases previously in this aggregate have now been split out as France and Spain. Remaining 3 individual cases not yet publicly identified in trusted-source reporting; will be split out as country-specific confirmations land.",
+    "location_specificity": "unknown",
+    "location_country": null,
+    "location_admin1": null,
+    "location_city": null,
+    "location_lat": null,
+    "location_lng": null
   },
   {
     "id": "case-008-usa-ne-unmc-monitoring",
@@ -204,7 +246,13 @@
         "title": "Live updates: Passengers from hantavirus-hit cruise ship being monitored at US medical units"
       }
     ],
-    "notes": "15 American former MV Hondius passengers in National Quarantine Unit at UNMC; asymptomatic, under contact monitoring. NOT counted in WHO/ECDC headline case count."
+    "notes": "15 American former MV Hondius passengers in National Quarantine Unit at UNMC; asymptomatic, under contact monitoring. NOT counted in WHO/ECDC headline case count.",
+    "location_specificity": "city",
+    "location_country": "US",
+    "location_admin1": "NE",
+    "location_city": "omaha",
+    "location_lat": 41.2565,
+    "location_lng": -95.9345
   },
   {
     "id": "case-009-usa-ga-emory-monitoring",
@@ -222,7 +270,13 @@
         "title": "Live updates: Passengers from hantavirus-hit cruise ship being monitored at US medical units"
       }
     ],
-    "notes": "Two former MV Hondius passengers at Emory University, Atlanta; one reportedly symptomatic, one asymptomatic. Status of the symptomatic individual may upgrade to 'suspected' or 'probable' pending lab confirmation."
+    "notes": "Two former MV Hondius passengers at Emory University, Atlanta; one reportedly symptomatic, one asymptomatic. Status of the symptomatic individual may upgrade to 'suspected' or 'probable' pending lab confirmation.",
+    "location_specificity": "city",
+    "location_country": "US",
+    "location_admin1": "GA",
+    "location_city": "atlanta",
+    "location_lat": 33.749,
+    "location_lng": -84.388
   },
   {
     "id": "case-010-usa-nj-air-exposure-monitoring",
@@ -240,7 +294,13 @@
         "title": "Is the Hantavirus in the US? Map Shows States Where Passengers Have Returned Home"
       }
     ],
-    "notes": "Two New Jersey residents under contact monitoring after air-travel exposure to a Hondius passenger; asymptomatic."
+    "notes": "Two New Jersey residents under contact monitoring after air-travel exposure to a Hondius passenger; asymptomatic.",
+    "location_specificity": "admin1",
+    "location_country": "US",
+    "location_admin1": "NJ",
+    "location_city": null,
+    "location_lat": null,
+    "location_lng": null
   },
   {
     "id": "case-011-gbr-dual-national-unmc-monitoring",
@@ -258,7 +318,13 @@
         "title": "Live updates: Passengers from hantavirus-hit cruise ship being monitored at US medical units"
       }
     ],
-    "notes": "British dual-national former MV Hondius passenger under contact monitoring at UNMC (US/NE)."
+    "notes": "British dual-national former MV Hondius passenger under contact monitoring at UNMC (US/NE).",
+    "location_specificity": "city",
+    "location_country": "US",
+    "location_admin1": "NE",
+    "location_city": "omaha",
+    "location_lat": 41.2565,
+    "location_lng": -95.9345
   },
   {
     "id": "case-012-fra-repatriation-confirmed",
@@ -276,7 +342,13 @@
         "title": "Hantavirus cluster linked to cruise ship travel - Multi-country (Update, 13 May 2026)"
       }
     ],
-    "notes": "French former MV Hondius passenger; became symptomatic during repatriation. Confirmed Andes virus per WHO DON601 (May 13, 2026)."
+    "notes": "French former MV Hondius passenger; became symptomatic during repatriation. Confirmed Andes virus per WHO DON601 (May 13, 2026).",
+    "location_specificity": "country",
+    "location_country": "FR",
+    "location_admin1": null,
+    "location_city": null,
+    "location_lat": null,
+    "location_lng": null
   },
   {
     "id": "case-013-esp-tenerife-confirmed",
@@ -294,7 +366,13 @@
         "title": "Hantavirus cluster linked to cruise ship travel - Multi-country (Update, 13 May 2026)"
       }
     ],
-    "notes": "Spanish former MV Hondius passenger; tested upon arrival in Tenerife following repatriation; currently asymptomatic. Confirmed Andes virus per WHO DON601 (May 13, 2026)."
+    "notes": "Spanish former MV Hondius passenger; tested upon arrival in Tenerife following repatriation; currently asymptomatic. Confirmed Andes virus per WHO DON601 (May 13, 2026).",
+    "location_specificity": "city",
+    "location_country": "ES",
+    "location_admin1": null,
+    "location_city": "santa-cruz-de-tenerife",
+    "location_lat": 28.4636,
+    "location_lng": -16.2518
   },
   {
     "id": "case-014-usa-other-monitoring-aggregate",
@@ -317,6 +395,12 @@
         "title": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship"
       }
     ],
-    "notes": "AGGREGATE — 21 additional contacts under public-health monitoring across 13 US states whose specific locations have not been publicly identified. Per CDC (May 14, 2026), 41 people across 16 US states are being monitored following potential Andes virus exposure from the MV Hondius cruise. Our named-location case rows (NE × 16, GA × 2, NJ × 2, UK dual-national × 1 at UNMC) account for 20 of those; this aggregate row covers the remaining 21 distributed across 13 unnamed states. Will be split out as specific-state reporting becomes available."
+    "notes": "AGGREGATE \u2014 21 additional contacts under public-health monitoring across 13 US states whose specific locations have not been publicly identified. Per CDC (May 14, 2026), 41 people across 16 US states are being monitored following potential Andes virus exposure from the MV Hondius cruise. Our named-location case rows (NE \u00d7 16, GA \u00d7 2, NJ \u00d7 2, UK dual-national \u00d7 1 at UNMC) account for 20 of those; this aggregate row covers the remaining 21 distributed across 13 unnamed states. Will be split out as specific-state reporting becomes available.",
+    "location_specificity": "country",
+    "location_country": "US",
+    "location_admin1": null,
+    "location_city": null,
+    "location_lat": null,
+    "location_lng": null
   }
 ]
