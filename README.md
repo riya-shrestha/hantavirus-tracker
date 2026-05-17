@@ -32,11 +32,15 @@ hantavirus-tracker/
 **Tier 1 — official health agencies** (basis of headline counts):
 - WHO Disease Outbreak News — [DON601 (Hondius cluster, latest)](https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON601) · [DON600 (8 May)](https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON600)
 - CDC HAN — [HAN00528 (US monitoring)](https://www.cdc.gov/han/php/notices/han00528.html)
-- ECDC — [Andes hantavirus outbreak, 12 May 2026](https://www.ecdc.europa.eu/en/infectious-disease-topics/hantavirus-infection/surveillance-and-updates/andes-hantavirus-outbreak)
-- National health agencies of affected countries (RIVM, RKI, BAG, NICD, UKHSA, US state health depts)
+- ECDC — [Andes hantavirus outbreak (continuously updated)](https://www.ecdc.europa.eu/en/infectious-disease-topics/hantavirus-infection/surveillance-and-updates/andes-hantavirus-outbreak)
+- RIVM (Netherlands) — [Current information about hantavirus](https://www.rivm.nl/en/hantavirus/current-information)
+- Public Health Agency of Canada (PHAC), RKI (Germany), BAG (Switzerland), NICD (South Africa), UKHSA (UK), Santé publique France, Spanish Ministerio de Sanidad, US state health departments
 
 **Tier 2 — major news with health desks:**
-Reuters, AP, NPR, CNN, BBC, NYT, FT, Washington Post, regional equivalents.
+Reuters, AP, NPR, CNN, BBC, NYT, FT, Washington Post, PBS News, CBS News, regional equivalents.
+
+**Live-update news feeds (tier 2, useful for daily polling):**
+- [ABC News — Hantavirus live updates](https://abcnews.com/International/live-updates/hantavirus-live-updates-mv-hondius-canary-islands/?id=132746955) (continuously updated)
 
 **Tier 3 — expert-curated informal:** ProMED-mail, HealthMap, CIDRAP.
 

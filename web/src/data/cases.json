@@ -258,7 +258,7 @@
     "id": "case-009-usa-ga-emory-monitoring",
     "schema_version": 0,
     "country": "US",
-    "admin1": "GA",
+    "admin1": "NE",
     "case_type": "contact_monitoring",
     "current_status": "suspected_unresolved",
     "case_count": 2,
@@ -268,15 +268,20 @@
         "url": "https://www.cnn.com/2026/05/11/us/live-news/hantavirus-cruise-outbreak",
         "source_name": "CNN",
         "title": "Live updates: Passengers from hantavirus-hit cruise ship being monitored at US medical units"
+      },
+      {
+        "url": "https://abcnews.com/International/live-updates/hantavirus-live-updates-mv-hondius-canary-islands/?id=132746955",
+        "source_name": "ABC News",
+        "title": "Hantavirus live updates: Atlanta passengers relocate to Nebraska quarantine facility"
       }
     ],
-    "notes": "Two former MV Hondius passengers at Emory University, Atlanta; one reportedly symptomatic, one asymptomatic. Status of the symptomatic individual may upgrade to 'suspected' or 'probable' pending lab confirmation.",
+    "notes": "Two former MV Hondius passengers; originally transferred to Emory University in Atlanta, Georgia. Per ABC News (May 16) and updated WHO/CDC reports, both individuals were relocated to UNMC's quarantine unit in Omaha, Nebraska to consolidate all 18 American passengers at a single facility. Asymptomatic; monitoring continues at UNMC.",
     "location_specificity": "city",
     "location_country": "US",
-    "location_admin1": "GA",
-    "location_city": "atlanta",
-    "location_lat": 33.749,
-    "location_lng": -84.388
+    "location_admin1": "NE",
+    "location_city": "omaha",
+    "location_lat": 41.2565,
+    "location_lng": -95.9345
   },
   {
     "id": "case-010-usa-nj-air-exposure-monitoring",
@@ -402,5 +407,58 @@
     "location_city": null,
     "location_lat": null,
     "location_lng": null
+  },
+  {
+    "id": "case-015-can-repatriation-confirmed",
+    "schema_version": 0,
+    "country": "CA",
+    "admin1": null,
+    "case_type": "confirmed",
+    "current_status": "confirmed",
+    "case_count": 1,
+    "date_reported": "2026-05-15",
+    "location_specificity": "country",
+    "location_country": "CA",
+    "location_admin1": null,
+    "location_city": null,
+    "location_lat": null,
+    "location_lng": null,
+    "source_articles": [
+      {
+        "url": "https://abcnews.com/International/live-updates/hantavirus-live-updates-mv-hondius-canary-islands/?id=132746955",
+        "source_name": "ABC News",
+        "title": "Hantavirus live updates: Canadian passenger tests positive for Andes virus"
+      },
+      {
+        "url": "https://www.ecdc.europa.eu/en/infectious-disease-topics/hantavirus-infection/surveillance-and-updates/andes-hantavirus-outbreak",
+        "source_name": "ECDC",
+        "title": "Andes hantavirus outbreak in cruise ship, 17 May 2026"
+      }
+    ],
+    "notes": "Canadian former MV Hondius passenger; one of four Canadians repatriated. Tested positive for Andes virus on May 15, 2026, per Public Health Agency of Canada (PHAC). Hospitalized in isolation along with their partner (see case-016, partner tested negative so far). Specific Canadian city/province not publicly identified in current reporting; will be enriched as PHAC publishes details."
+  },
+  {
+    "id": "case-016-can-partner-monitoring",
+    "schema_version": 0,
+    "country": "CA",
+    "admin1": null,
+    "case_type": "contact_monitoring",
+    "current_status": "suspected_unresolved",
+    "case_count": 1,
+    "date_reported": "2026-05-15",
+    "location_specificity": "country",
+    "location_country": "CA",
+    "location_admin1": null,
+    "location_city": null,
+    "location_lat": null,
+    "location_lng": null,
+    "source_articles": [
+      {
+        "url": "https://abcnews.com/International/live-updates/hantavirus-live-updates-mv-hondius-canary-islands/?id=132746955",
+        "source_name": "ABC News",
+        "title": "Hantavirus live updates: Canadian passenger tests positive for Andes virus"
+      }
+    ],
+    "notes": "Partner of case-015 (the Canadian confirmed-positive passenger); also a former MV Hondius passenger. Hospitalized in isolation as a precaution; tested negative for Andes virus so far per PHAC. Continued public-health monitoring during the 42-day quarantine window."
   }
 ]

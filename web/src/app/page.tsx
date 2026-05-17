@@ -77,8 +77,9 @@ export default function Home() {
           target="_blank"
           rel="noopener"
         >
-          ECDC May 16
-        </a>
+          ECDC May 17
+        </a>{" "}
+        (incl. the May 15 Canadian-passenger positive)
         . One previously-included US case has been cleared by negative re-test
         (see case-005). Contact-monitoring population (
         <span className="font-medium">{h.monitoring}</span> across the US and
