@@ -1,0 +1,216 @@
+// Hantavirus Tracker — Prisma schema (Phase 0 initial)
+// See /pipeline/README.md and /docs (TBD) for design rationale.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────
+
+enum CaseType {
+  confirmed
+  probable
+  suspected
+  contact_monitoring
+  death
+}
+
+enum CurrentStatus {
+  confirmed
+  suspected_unresolved
+  excluded
+  deceased
+}
+
+enum DeathClassification {
+  confirmed
+  probable
+}
+
+enum LocationSpecificity {
+  city
+  admin1
+  country
+  unknown
+  at_sea
+}
+
+enum CaseArticleRole {
+  primary
+  corroborating
+  update
+  rejected
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+}
+
+enum TransmissionRoute {
+  index_passenger
+  h2h_secondary
+  unclear
+}
+
+// ─── Core: cases ────────────────────────────────────────────────────
+
+model Case {
+  id                  String               @id @default(uuid())
+  // The dedup primary. UNIQUE constraint is what stops double-counting.
+  caseSignature       String               @unique
+  clusterId           String?              // 'hondius_2026' or null
+  // Attribution — typically nationality
+  country             String               // ISO-2
+  admin1              String?
+  caseType            CaseType
+  currentStatus       CurrentStatus
+  deathClassification DeathClassification? // only meaningful when caseType=death
+  caseCount           Int                  @default(1)
+  dateReported        DateTime             @db.Date
+  notes               String?              @db.Text
+
+  // PHYSICAL location — where the case actually is / was. May differ
+  // from attribution country (e.g., Dutch national who died in
+  // Johannesburg). Used for map plotting.
+  locationSpecificity LocationSpecificity  @default(unknown)
+  locationCountry     String?
+  locationAdmin1      String?
+  locationCity        String?              // city slug; joins to City.slug
+  locationLat         Float?
+  locationLng         Float?
+
+  needsAdminAttention Boolean              @default(false)
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  // Relations (not stored columns — Prisma resolves these via join table)
+  articles            CaseArticle[]
+  transmissionsFrom   TransmissionEdge[]   @relation("SourceCase")
+  transmissionsTo     TransmissionEdge[]   @relation("TargetCase")
+
+  @@index([country])
+  @@index([dateReported])
+  @@index([clusterId])
+  @@index([locationCountry, locationAdmin1, locationCity])
+  @@index([currentStatus])
+}
+
+// ─── Articles ───────────────────────────────────────────────────────
+
+model Article {
+  id             String        @id @default(uuid())
+  // Canonical URL (after redirect resolution). UNIQUE so the same article
+  // can't be inserted twice even if encountered via different links.
+  canonicalUrl   String        @unique
+  title          String
+  sourceName     String        // 'CDC HAN', 'WHO DON', 'NPR', etc.
+  sourceTier     Int           // 1 = official agency, 2 = major news, 3 = informal, 4 = aggregator/blog
+  publishedAt    DateTime?     // article publication date
+  fetchedAt      DateTime      @default(now())
+  extractionJson Json?         // raw LLM output, kept for audit / replay
+
+  cases          CaseArticle[]
+
+  @@index([sourceName])
+  @@index([sourceTier])
+  @@index([publishedAt])
+}
+
+// ─── Join: which articles cover which cases ─────────────────────────
+
+model CaseArticle {
+  caseId    String
+  articleId String
+  role      CaseArticleRole @default(corroborating)
+  createdAt DateTime        @default(now())
+
+  case      Case            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  article   Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([caseId, articleId])
+  @@index([articleId])
+}
+
+// ─── Review queue ───────────────────────────────────────────────────
+// Pipeline writes proposals here. Admin /admin page reads pending rows
+// and approves / rejects / edits / merges into the canonical `Case` table.
+
+model ReviewQueue {
+  id                String       @id @default(uuid())
+  articleId         String       // the article that triggered this proposal
+  proposedCase      Json         // full proposed case payload
+  proposedSignature String
+  status            ReviewStatus @default(pending)
+  matches           Json?        // [{caseId, similarity}, ...] for near-matches surfaced to admin
+  reviewer          String?      // GitHub login / PAT-verified identity
+  reviewedAt        DateTime?
+  createdAt         DateTime     @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─── Cities (GeoNames bulk-loaded in Phase 1) ───────────────────────
+
+model City {
+  geonameid   Int         @id
+  slug        String      // lowercase, normalized
+  displayName String
+  countryCode String      // ISO-2
+  admin1Code  String?     // GeoNames admin1 code (state for US)
+  lat         Float
+  lng         Float
+  population  Int
+
+  aliases     CityAlias[]
+
+  @@index([countryCode, slug])
+  @@index([slug])
+}
+
+model CityAlias {
+  cityGeonameid Int
+  aliasSlug     String
+  city          City   @relation(fields: [cityGeonameid], references: [geonameid], onDelete: Cascade)
+
+  @@id([cityGeonameid, aliasSlug])
+  @@index([aliasSlug])
+}
+
+// ─── Cruise positions (Phase 1 hand-curated; future: AIS feed) ──────
+
+model CruisePosition {
+  clusterId    String
+  date         DateTime @db.Date
+  lat          Float
+  lng          Float
+  positionName String?  // e.g., 'between South Georgia and Tristan da Cunha'
+  sourceUrl    String?
+
+  @@id([clusterId, date])
+}
+
+// ─── Transmission edges (forward-compat for v1.2 /chain page) ───────
+
+model TransmissionEdge {
+  id           String            @id @default(uuid())
+  sourceCaseId String
+  targetCaseId String
+  route        TransmissionRoute
+  confidence   String            // 'high'|'medium'|'low'
+  createdAt    DateTime          @default(now())
+
+  sourceCase   Case @relation("SourceCase", fields: [sourceCaseId], references: [id], onDelete: Cascade)
+  targetCase   Case @relation("TargetCase", fields: [targetCaseId], references: [id], onDelete: Cascade)
+
+  @@index([sourceCaseId])
+  @@index([targetCaseId])
+}
